@@ -14,7 +14,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:prod-schema": "node scripts/setup-prod-schema.js",
-    "db:dev-schema": "git checkout prisma/schema.prisma"
+    "db:dev-schema": "git checkout prisma/schema.prisma",
+    "db:seed-vercel": "node scripts/seed-vercel.js"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

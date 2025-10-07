@@ -15,11 +15,8 @@ try {
   console.log('🗄️ Aplicando schema no banco...');
   execSync('prisma db push', { stdio: 'inherit' });
 
-  // 4. Executar seed
-  console.log('🌱 Executando seed...');
-  execSync('npm run db:seed', { stdio: 'inherit' });
-
   console.log('✅ Setup da Vercel concluído com sucesso!');
+  console.log('ℹ️ Para popular o banco, execute: npm run db:seed após o deploy');
 } catch (error) {
   console.error('❌ Erro durante o setup da Vercel:', error.message);
   process.exit(1);

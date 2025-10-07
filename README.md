@@ -219,14 +219,47 @@ Acesse `/admin` com conta de administrador.
 
 ### Vercel (Recomendado)
 
-1. Conecte seu repositório ao Vercel
-2. Configure as variáveis de ambiente no painel
-3. Configure um banco PostgreSQL (Supabase, Railway, etc.)
-4. Deploy automático
+1. **Conecte seu repositório ao Vercel**
+2. **Configure um banco PostgreSQL**:
+   - Vercel Postgres (recomendado)
+   - Supabase
+   - Railway
+   - PlanetScale
+   - Neon
 
-### Variáveis de Ambiente para Produção
+3. **Configure as variáveis de ambiente no painel da Vercel**:
+   ```
+   DATABASE_URL=postgres://user:pass@host:5432/db
+   NEXTAUTH_SECRET=sua-chave-secreta-super-forte
+   NEXTAUTH_URL=https://seu-site.vercel.app
+   SUPER_ADMIN_EMAIL=eutenhosonhos5@gmail.com
+   SUPER_ADMIN_PASSWORD=Eutenhosonhos2025#
+   MP_ACCESS_TOKEN=seu-token-mercadopago
+   MP_PUBLIC_KEY=sua-chave-publica-mercadopago
+   SENDGRID_API_KEY=sua-chave-sendgrid
+   SENDGRID_FROM_EMAIL=noreply@seudominio.com
+   ```
 
-Certifique-se de configurar todas as variáveis do `.env.example` no painel do Vercel.
+4. **Deploy automático** - O build irá:
+   - Configurar schema PostgreSQL automaticamente
+   - Gerar cliente Prisma
+   - Aplicar schema no banco
+
+5. **Popular banco de dados** (após primeiro deploy):
+   ```bash
+   # Execute no terminal da Vercel ou localmente com DATABASE_URL de produção
+   npm run db:seed-vercel
+   ```
+
+### ⚠️ Importante sobre o Seed
+
+O seed **não** é executado automaticamente no build para evitar timeout de 45 minutos. Execute manualmente após o deploy usando `npm run db:seed-vercel`.
+
+### Scripts de Deploy
+
+- `npm run db:prod-schema` - Copia schema PostgreSQL
+- `npm run db:dev-schema` - Reverte para schema SQLite
+- `npm run db:seed-vercel` - Executa seed na Vercel
 
 ## 🧪 Testes
 
