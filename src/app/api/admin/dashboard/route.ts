@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,26 +26,26 @@ export async function GET(request: NextRequest) {
       payments
     ] = await Promise.all([
       // Total de usuários
-      prisma.user.count(),
+      prismaWithRetry.user.count(),
       
       // Total de pedidos
-      prisma.order.count(),
+      prismaWithRetry.order.count(),
       
       // Total de cupons
-      prisma.coupon.count(),
+      prismaWithRetry.coupon.count(),
       
       // Cupons utilizados
-      prisma.coupon.count({
+      prismaWithRetry.coupon.count({
         where: { status: 'USED' }
       }),
       
       // Cupons disponíveis
-      prisma.coupon.count({
+      prismaWithRetry.coupon.count({
         where: { status: 'AVAILABLE' }
       }),
       
       // Pedidos recentes
-      prisma.order.findMany({
+      prismaWithRetry.order.findMany({
         take: 5,
         orderBy: { created_at: 'desc' },
         include: {
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Cupons recentes
-      prisma.coupon.findMany({
+      prismaWithRetry.coupon.findMany({
         take: 5,
         orderBy: { created_at: 'desc' },
         include: {
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Pagamentos para calcular receita
-      prisma.payment.findMany({
+      prismaWithRetry.payment.findMany({
         where: { status: 'APPROVED' }
       })
     ])
