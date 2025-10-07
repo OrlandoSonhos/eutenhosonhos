@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || (session as any).user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -33,7 +33,7 @@ export async function PATCH(
     }
 
     // Não permitir que o usuário altere sua própria função
-    if (user.id === session.user.id) {
+    if (user.id === (session as any).user.id) {
       return NextResponse.json(
         { error: 'Você não pode alterar sua própria função' },
         { status: 400 }

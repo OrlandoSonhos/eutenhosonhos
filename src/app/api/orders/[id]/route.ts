@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -10,7 +10,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user) {
+    if (!session || !(session as any).user) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
@@ -22,7 +22,7 @@ export async function GET(
     const order = await prisma.order.findFirst({
       where: {
         id: id,
-        user_id: session.user.id
+        user_id: (session as any).user.id
       },
       include: {
         order_items: {

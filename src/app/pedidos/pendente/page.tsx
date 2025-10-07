@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Clock, Package, ArrowRight, RefreshCw } from 'lucide-react'
@@ -22,7 +22,7 @@ interface Order {
   }>
 }
 
-export default function OrderPendingPage() {
+function OrderPendingContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order')
   const [order, setOrder] = useState<Order | null>(null)
@@ -169,7 +169,7 @@ export default function OrderPendingPage() {
             <h3 className="font-medium text-blue-900 mb-2">Importante:</h3>
             <ul className="text-blue-800 text-sm space-y-1">
               <li>• Você receberá um e-mail assim que o pagamento for confirmado</li>
-              <li>• Acompanhe o status na seção "Meus Pedidos"</li>
+              <li>• Acompanhe o status na seção &quot;Meus Pedidos&quot;</li>
               <li>• Se o pagamento não for confirmado em 24h, o pedido será cancelado automaticamente</li>
               <li>• Em caso de dúvidas, entre em contato conosco</li>
             </ul>
@@ -177,5 +177,13 @@ export default function OrderPendingPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OrderPendingPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <OrderPendingContent />
+    </Suspense>
   )
 }

@@ -3,8 +3,9 @@
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
+import { Suspense } from 'react'
 
-export default function OrderErrorPage() {
+function OrderErrorContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order')
 
@@ -88,5 +89,13 @@ export default function OrderErrorPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OrderErrorPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <OrderErrorContent />
+    </Suspense>
   )
 }

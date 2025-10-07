@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { validateCoupon, applyCoupon } from '@/lib/coupons'
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     // Criar o pedido no banco de dados
     const order = await prisma.order.create({
       data: {
-        user_id: session.user.id,
+        user_id: (session as any).user.id,
         status: 'PENDING',
         total_cents: orderData.total,
         order_items: {
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         price_cents: item.price_cents
       })),
-      session.user.email,
+      (session as any).user.email,
       order.id
     )
 

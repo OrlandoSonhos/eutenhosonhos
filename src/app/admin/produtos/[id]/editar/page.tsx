@@ -46,7 +46,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
   // Carregar produto
   useEffect(() => {
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || (session.user as any).role !== 'ADMIN') {
       router.push('/login')
       return
     }
@@ -212,7 +212,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     )
   }
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
+  if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return null
   }
 

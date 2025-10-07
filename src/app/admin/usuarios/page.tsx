@@ -24,7 +24,7 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || (session.user as any).role !== 'ADMIN') {
       redirect('/auth/signin')
     }
     fetchUsers()
@@ -195,7 +195,7 @@ export default function AdminUsersPage() {
                       {new Date(user.created_at).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {user.id !== session?.user.id && (
+                      {user.id !== (session?.user as any)?.id && (
                         <select
                           value={user.role}
                           onChange={(e) => updateUserRole(user.id, e.target.value as 'USER' | 'ADMIN')}
@@ -205,7 +205,7 @@ export default function AdminUsersPage() {
                           <option value="ADMIN">Administrador</option>
                         </select>
                       )}
-                      {user.id === session?.user.id && (
+                      {user.id === (session?.user as any).id && (
                         <span className="text-gray-400 text-sm">Você mesmo</span>
                       )}
                     </td>

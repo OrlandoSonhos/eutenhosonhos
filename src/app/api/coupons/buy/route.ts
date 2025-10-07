@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { createCouponPreference } from '@/lib/mercadopago'
 import { COUPON_TYPES } from '@/lib/coupons'
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       couponType.faceValueCents,
       couponType.salePriceCents,
       couponTypeId,
-      session.user.email
+      (session as any).user.email
     )
 
     return NextResponse.json({

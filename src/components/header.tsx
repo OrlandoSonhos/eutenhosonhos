@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
-import { ShoppingCart, User, Menu, X } from 'lucide-react'
+import { ShoppingCart, Menu, X } from 'lucide-react'
 
 export function Header() {
   const { data: session } = useSession()
@@ -15,7 +15,7 @@ export function Header() {
     const updateCartCount = () => {
       try {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-        const totalItems = cart.reduce((total: number, item: any) => total + item.quantity, 0)
+        const totalItems = cart.reduce((total: number, item: { quantity: number }) => total + item.quantity, 0)
         setCartItemCount(totalItems)
       } catch {
         setCartItemCount(0)
@@ -58,7 +58,7 @@ export function Header() {
                 Meus Cupons
               </Link>
             )}
-            {session?.user.role === 'ADMIN' && (
+            {session && (session as any).user?.role === 'ADMIN' && (
               <Link href="/admin" className="text-gray-700 hover:text-indigo-600 transition-colors">
                 Admin
               </Link>
@@ -81,7 +81,7 @@ export function Header() {
             {session ? (
               <div className="relative">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">Olá, {session.user.name}</span>
+                  <span className="text-sm text-gray-700">Olá, {(session as any).user?.name}</span>
                   <button
                     onClick={() => signOut()}
                     className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
@@ -144,7 +144,7 @@ export function Header() {
                   Meus Cupons
                 </Link>
               )}
-              {session?.user.role === 'ADMIN' && (
+              {session && (session as any).user?.role === 'ADMIN' && (
                 <Link
                   href="/admin"
                   className="text-gray-700 hover:text-indigo-600 transition-colors py-2"

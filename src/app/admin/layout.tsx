@@ -40,7 +40,7 @@ export default function AdminLayout({
     )
   }
 
-  if (!session || session.user.role !== 'ADMIN') {
+  if (!session || !session.user || (session.user as any).role !== 'ADMIN') {
     redirect('/auth/signin')
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, Package, ArrowRight } from 'lucide-react'
@@ -22,7 +22,7 @@ interface Order {
   }>
 }
 
-export default function OrderSuccessPage() {
+function OrderSuccessContent() {
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order')
   const [order, setOrder] = useState<Order | null>(null)
@@ -158,12 +158,20 @@ export default function OrderSuccessPage() {
             <h3 className="font-medium text-blue-900 mb-2">Próximos Passos:</h3>
             <ul className="text-blue-800 text-sm space-y-1">
               <li>• Você receberá um e-mail de confirmação com os detalhes do pedido</li>
-              <li>• Acompanhe o status do seu pedido na seção "Meus Pedidos"</li>
+              <li>• Acompanhe o status do seu pedido na seção &quot;Meus Pedidos&quot;</li>
               <li>• Em caso de dúvidas, entre em contato conosco</li>
             </ul>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <OrderSuccessContent />
+    </Suspense>
   )
 }

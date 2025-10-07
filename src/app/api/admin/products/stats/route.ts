@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -155,7 +155,7 @@ export async function GET(request: NextRequest) {
         images: JSON.parse(product.images),
         sales_count: product._count.order_items
       })),
-      low_stock_products: lowStockProducts.map((product: { id: number; title: string; stock: number; images: string }) => ({
+      low_stock_products: lowStockProducts.map((product: { id: string; title: string; stock: number; images: string }) => ({
         ...product,
         images: JSON.parse(product.images)
       }))

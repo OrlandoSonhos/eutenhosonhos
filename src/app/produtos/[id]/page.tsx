@@ -64,7 +64,7 @@ export default function ProductDetailPage() {
       const currentCart = JSON.parse(localStorage.getItem('cart') || '[]')
       
       // Verificar se o produto já está no carrinho
-      const existingItemIndex = currentCart.findIndex((item: any) => item.id === product.id)
+      const existingItemIndex = currentCart.findIndex((item: { id: string }) => item.id === product.id)
       
       if (existingItemIndex >= 0) {
         // Atualizar quantidade

@@ -144,7 +144,7 @@ export default function NewProductPage() {
     setForm(prev => ({ ...prev, price_cents: cents }))
   }
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
+  if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return null
   }
 

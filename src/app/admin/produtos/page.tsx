@@ -58,7 +58,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     if (status === 'loading') return
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || (session.user as any).role !== 'ADMIN') {
       router.push('/login')
       return
     }
@@ -93,7 +93,7 @@ export default function AdminProductsPage() {
   }
 
   useEffect(() => {
-    if (session?.user?.role === 'ADMIN') {
+    if ((session?.user as any)?.role === 'ADMIN') {
       loadProducts()
     }
   }, [session, currentPage, searchTerm, activeFilter])
@@ -158,7 +158,7 @@ export default function AdminProductsPage() {
     )
   }
 
-  if (!session?.user || session.user.role !== 'ADMIN') {
+  if (!session?.user || (session.user as any).role !== 'ADMIN') {
     return null
   }
 

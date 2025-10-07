@@ -29,7 +29,7 @@ export default function AdminCouponsPage() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || !session.user || (session.user as any).role !== 'ADMIN') {
       redirect('/auth/signin')
     }
     fetchCoupons()

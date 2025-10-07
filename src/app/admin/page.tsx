@@ -38,7 +38,7 @@ export default function AdminDashboard() {
       return
     }
 
-    if (status === 'authenticated' && session?.user.role !== 'ADMIN') {
+    if (status === 'authenticated' && session?.user && (session.user as any).role !== 'ADMIN') {
       router.push('/')
       return
     }

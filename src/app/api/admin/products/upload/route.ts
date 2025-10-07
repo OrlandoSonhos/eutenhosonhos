@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
+import { writeFile, mkdir, unlink } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
 
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -106,8 +106,7 @@ export async function DELETE(request: NextRequest) {
     const filepath = join(process.cwd(), 'public', 'uploads', 'products', filename)
 
     if (existsSync(filepath)) {
-      const fs = require('fs').promises
-      await fs.unlink(filepath)
+      await unlink(filepath)
     }
 
     return NextResponse.json({

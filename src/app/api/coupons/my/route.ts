@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getUserCoupons } from '@/lib/coupons'
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const coupons = await getUserCoupons(session.user.id)
+    const coupons = await getUserCoupons((session as any).user.id)
 
     return NextResponse.json({ coupons })
 
