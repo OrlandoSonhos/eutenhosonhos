@@ -1,13 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
+interface SessionUser {
+  role: string;
+}
 
-    if (!session || (session as any).user.role !== 'ADMIN') {
+interface SessionWithUser {
+  user: SessionUser;
+}
+
+interface OrderWithUser {
+  id: string;
+  total_cents: number;
+  status: string;
+  created_at: Date;
+  user: {
+    name: string;
+    email: string;
+  } | null;
+}
+
+interface CouponWithBuyer {
+  id: string;
+  code: string;
+  face_value_cents: number;
+  status: string;
+  created_at: Date;
+  buyer: {
+    name: string;
+    email: string;
+  } | null;
+}
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions) as SessionWithUser | null
+
+    if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -21,8 +52,8 @@ export async function GET(request: NextRequest) {
       totalCoupons,
       couponsUsed,
       couponsAvailable,
-      recentOrders,
-      recentCoupons,
+      recentOrdersRaw,
+      recentCouponsRaw,
       payments
     ] = await Promise.all([
       // Total de usuários
@@ -77,6 +108,31 @@ export async function GET(request: NextRequest) {
       return sum + payment.amount_cents
     }, 0)
 
+    // Mapear pedidos recentes
+    const recentOrders = recentOrdersRaw.map((order) => ({
+      id: order.id,
+      total_cents: order.total_cents,
+      status: order.status,
+      created_at: order.created_at,
+      user: (order as any).user ? {
+        name: (order as any).user.name,
+        email: (order as any).user.email
+      } : null
+    }))
+
+    // Mapear cupons recentes
+    const recentCoupons = recentCouponsRaw.map((coupon) => ({
+      id: coupon.id,
+      code: coupon.code,
+      face_value_cents: coupon.face_value_cents,
+      status: coupon.status,
+      created_at: coupon.created_at,
+      buyer: (coupon as any).buyer ? {
+        name: (coupon as any).buyer.name,
+        email: (coupon as any).buyer.email
+      } : null
+    }))
+
     // Preparar dados de resposta
     const dashboardData = {
       totalRevenue,
@@ -85,21 +141,8 @@ export async function GET(request: NextRequest) {
       totalCoupons,
       couponsUsed,
       couponsAvailable,
-      recentOrders: recentOrders.map(order => ({
-        id: order.id,
-        total_cents: order.total_cents,
-        status: order.status,
-        created_at: order.created_at,
-        user: order.user
-      })),
-      recentCoupons: recentCoupons.map(coupon => ({
-        id: coupon.id,
-        code: coupon.code,
-        face_value_cents: coupon.face_value_cents,
-        status: coupon.status,
-        created_at: coupon.created_at,
-        buyer: coupon.buyer
-      })),
+      recentOrders,
+      recentCoupons,
       monthlyRevenue: [] // Implementar depois com dados mensais
     }
 
