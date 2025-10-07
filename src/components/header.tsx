@@ -17,7 +17,7 @@ export function Header() {
         const cart = JSON.parse(localStorage.getItem('cart') || '[]')
         const totalItems = cart.reduce((total: number, item: any) => total + item.quantity, 0)
         setCartItemCount(totalItems)
-      } catch (error) {
+      } catch {
         setCartItemCount(0)
       }
     }

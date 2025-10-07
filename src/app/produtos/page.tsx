@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Filter, ShoppingCart } from 'lucide-react'
+import { Search, ShoppingCart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface Product {
@@ -40,13 +39,7 @@ export default function ProductsPage() {
     hasPrev: false
   })
 
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    fetchProducts()
-  }, [search, pagination.page])
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -70,7 +63,11 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search, pagination.page])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
