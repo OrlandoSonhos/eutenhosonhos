@@ -5,14 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "prisma db push && npm run db:seed",
+    "postbuild": "node scripts/setup-prod-schema.js && prisma generate && prisma db push && npm run db:seed",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:prod-schema": "node scripts/setup-prod-schema.js",
+    "db:dev-schema": "git checkout prisma/schema.prisma"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
