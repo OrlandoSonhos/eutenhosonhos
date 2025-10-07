@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "node scripts/setup-prod-schema.js && prisma generate && prisma db push && npm run db:seed",
+    "postbuild": "node scripts/setup-prod-schema.js && prisma generate",
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
