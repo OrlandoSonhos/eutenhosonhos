@@ -1,4 +1,3 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build && node scripts/vercel-postbuild.js"
+  "framework": "nextjs"
 }

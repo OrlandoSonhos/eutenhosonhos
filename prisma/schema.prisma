@@ -1,4 +1,4 @@
-// This is your Prisma schema file,
+// This is your Prisma schema file for production (PostgreSQL),
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -20,12 +20,17 @@ model User {
   updated_at    DateTime @updatedAt
 
   // Relations
-  orders        Order[]
-  coupons       Coupon[]
-  accounts      Account[]
-  sessions      Session[]
+  accounts Account[]
+  sessions Session[]
+  orders   Order[]
+  coupons  Coupon[]  @relation("CouponBuyer")
 
   @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 model Account {
@@ -34,12 +39,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -96,9 +101,17 @@ model Order {
   user         User        @relation(fields: [user_id], references: [id])
   order_items  OrderItem[]
   payments     Payment[]
-  used_coupons Coupon[]
+  used_coupons Coupon[]    @relation("CouponUsedInOrder")
 
   @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
 }
 
 model OrderItem {
@@ -109,31 +122,10 @@ model OrderItem {
   price_cents Int
 
   // Relations
-  order   Order   @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [order_id], references: [id])
   product Product @relation(fields: [product_id], references: [id])
 
   @@map("order_items")
-}
-
-model Coupon {
-  id                String       @id @default(cuid())
-  code              String       @unique
-  face_value_cents  Int
-  sale_price_cents  Int
-  buyer_id          String?
-  status            CouponStatus @default(AVAILABLE)
-  expires_at        DateTime
-  used_at           DateTime?
-  used_in_order_id  String?
-  created_at        DateTime     @default(now())
-  updated_at        DateTime     @updatedAt
-
-  // Relations
-  buyer          User?  @relation(fields: [buyer_id], references: [id])
-  used_in_order  Order? @relation(fields: [used_in_order_id], references: [id])
-  payment        Payment?
-
-  @@map("coupons")
 }
 
 model Payment {
@@ -154,25 +146,6 @@ model Payment {
   @@map("payments")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
-enum OrderStatus {
-  PENDING
-  PAID
-  CANCELLED
-  SHIPPED
-  DELIVERED
-}
-
-enum CouponStatus {
-  AVAILABLE
-  USED
-  EXPIRED
-}
-
 enum PaymentStatus {
   PENDING
   APPROVED
@@ -181,8 +154,35 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum CouponStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+}
+
 enum PaymentMethod {
   PIX
   CREDIT_CARD
   DEBIT_CARD
+}
+
+model Coupon {
+  id                String       @id @default(cuid())
+  code              String       @unique
+  face_value_cents  Int
+  sale_price_cents  Int
+  buyer_id          String?
+  status            CouponStatus @default(AVAILABLE)
+  expires_at        DateTime
+  used_at           DateTime?
+  used_in_order_id  String?
+  created_at        DateTime     @default(now())
+  updated_at        DateTime     @updatedAt
+
+  // Relations
+  buyer          User?     @relation("CouponBuyer", fields: [buyer_id], references: [id])
+  used_in_order  Order?    @relation("CouponUsedInOrder", fields: [used_in_order_id], references: [id])
+  payment        Payment?
+
+  @@map("coupons")
 }

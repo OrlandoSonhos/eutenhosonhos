@@ -240,20 +240,37 @@ Acesse `/admin` com conta de administrador.
    SENDGRID_FROM_EMAIL=noreply@seudominio.com
    ```
 
-4. **Deploy automático** - O build irá:
-   - Configurar schema PostgreSQL automaticamente
-   - Gerar cliente Prisma
-   - Aplicar schema no banco
+4. **Deploy automático** - O build irá apenas:
+   - Compilar o Next.js
+   - Gerar cliente Prisma automaticamente
 
-5. **Popular banco de dados** (após primeiro deploy):
+5. **Setup inicial do banco** (após primeiro deploy bem-sucedido):
+   
+   **Opção A - Via Terminal da Vercel (Recomendado):**
    ```bash
-   # Execute no terminal da Vercel ou localmente com DATABASE_URL de produção
+   # 1. Copiar schema PostgreSQL
+   npm run db:prod-schema
+   
+   # 2. Aplicar schema no banco
+   npx prisma db push
+   
+   # 3. Popular banco com dados iniciais
+   npm run db:seed-vercel
+   ```
+   
+   **Opção B - Localmente com DATABASE_URL de produção:**
+   ```bash
+   # Configure DATABASE_URL temporariamente para produção
+   npm run db:prod-schema
+   npx prisma db push
    npm run db:seed-vercel
    ```
 
-### ⚠️ Importante sobre o Seed
+### ✅ Vantagens desta Abordagem
 
-O seed **não** é executado automaticamente no build para evitar timeout de 45 minutos. Execute manualmente após o deploy usando `npm run db:seed-vercel`.
+- **Build rápido**: Sem timeout de 45 minutos
+- **Controle total**: Você executa quando quiser
+- **Debug fácil**: Vê exatamente o que acontece em cada etapa
 
 ### Scripts de Deploy
 
