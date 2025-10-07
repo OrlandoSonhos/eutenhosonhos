@@ -27,7 +27,13 @@ interface Product extends ProductForm {
   sales_count: number
 }
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  
+  return <EditProductContent productId={resolvedParams.id} />
+}
+
+function EditProductContent({ productId }: { productId: string }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -53,7 +59,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
 
     const loadProduct = async () => {
       try {
-        const response = await fetch(`/api/admin/products/${params.id}`)
+        const response = await fetch(`/api/admin/products/${productId}`)
         
         if (!response.ok) {
           throw new Error('Produto não encontrado')
@@ -80,7 +86,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
     }
 
     loadProduct()
-  }, [session, params.id, router])
+  }, [session, productId, router])
 
   // Upload de imagem
   const handleImageUpload = async (file: File) => {
@@ -153,7 +159,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       setLoading(true)
       setError('')
 
-      const response = await fetch(`/api/admin/products/${params.id}`, {
+      const response = await fetch(`/api/admin/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -166,7 +172,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         throw new Error(errorData.error || 'Erro ao atualizar produto')
       }
 
-      router.push(`/admin/produtos/${params.id}`)
+      router.push(`/admin/produtos/${productId}`)
     } catch (error) {
       console.error('Erro ao atualizar produto:', error)
       setError(error instanceof Error ? error.message : 'Erro ao atualizar produto')
@@ -221,7 +227,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link
-          href={`/admin/produtos/${params.id}`}
+          href={`/admin/produtos/${productId}`}
           className="p-2 hover:bg-gray-100 rounded-lg"
         >
           <ArrowLeftIcon className="h-5 w-5" />
@@ -384,7 +390,7 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
         {/* Botões */}
         <div className="flex justify-end gap-4">
           <Link
-            href={`/admin/produtos/${params.id}`}
+            href={`/admin/produtos/${productId}`}
             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
           >
             Cancelar

@@ -12,6 +12,10 @@ const nextConfig = {
     // !! WARN !!
     ignoreBuildErrors: false,
   },
+  serverExternalPackages: ['@prisma/client', 'prisma'],
+  images: {
+    domains: ['localhost'],
+  },
 }
 
 module.exports = nextConfig

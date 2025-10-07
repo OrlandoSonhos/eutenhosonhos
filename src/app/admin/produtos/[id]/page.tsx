@@ -43,7 +43,13 @@ interface Product {
   }>
 }
 
-export default function ProductDetailsPage({ params }: { params: { id: string } }) {
+export default async function ProductDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params
+  
+  return <ProductDetailsContent productId={resolvedParams.id} />
+}
+
+function ProductDetailsContent({ productId }: { productId: string }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [product, setProduct] = useState<Product | null>(null)
@@ -59,7 +65,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
 
     const loadProduct = async () => {
       try {
-        const response = await fetch(`/api/admin/products/${params.id}`)
+        const response = await fetch(`/api/admin/products/${productId}`)
         
         if (!response.ok) {
           throw new Error('Produto não encontrado')
@@ -76,7 +82,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     }
 
     loadProduct()
-  }, [session, params.id, router])
+  }, [session, productId, router])
 
   // Excluir produto
   const handleDeleteProduct = async () => {
@@ -85,7 +91,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     }
 
     try {
-      const response = await fetch(`/api/admin/products/${params.id}`, {
+      const response = await fetch(`/api/admin/products/${productId}`, {
         method: 'DELETE'
       })
 
@@ -106,7 +112,7 @@ export default function ProductDetailsPage({ params }: { params: { id: string } 
     if (!product) return
 
     try {
-      const response = await fetch(`/api/admin/products/${params.id}`, {
+      const response = await fetch(`/api/admin/products/${productId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
