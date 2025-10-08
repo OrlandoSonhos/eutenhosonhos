@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayment } from '@/lib/mercadopago'
 import { createCoupon, COUPON_TYPES } from '@/lib/coupons'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 import { sendOrderConfirmationEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verificar se já processamos este pagamento
-    const existingPayment = await prisma.payment.findFirst({
+    const existingPayment = await prismaWithRetry.payment.findFirst({
       where: { mp_payment_id: paymentId.toString() }
     })
 
@@ -81,7 +81,7 @@ async function processCouponPayment(paymentData: any) {
     // Buscar usuário pelo email do pagador
     let userId = null
     if (paymentData.payer?.email) {
-      const user = await prisma.user.findUnique({
+      const user = await prismaWithRetry.user.findUnique({
         where: { email: paymentData.payer.email }
       })
       userId = user?.id
@@ -96,7 +96,7 @@ async function processCouponPayment(paymentData: any) {
     })
 
     // Registrar pagamento
-    await prisma.payment.create({
+    await prismaWithRetry.payment.create({
       data: {
         coupon_id: coupon.id,
         mp_payment_id: paymentData.id.toString(),
@@ -120,7 +120,7 @@ async function processOrderPayment(paymentData: any) {
     const orderId = externalReference.replace('order-', '')
 
     // Buscar pedido
-    const order = await prisma.order.findUnique({
+    const order = await prismaWithRetry.order.findUnique({
       where: { id: orderId },
       include: {
         user: true,
@@ -136,13 +136,13 @@ async function processOrderPayment(paymentData: any) {
     }
 
     // Atualizar status do pedido
-    await prisma.order.update({
+    await prismaWithRetry.order.update({
       where: { id: orderId },
       data: { status: 'PAID' }
     })
 
     // Registrar pagamento
-    await prisma.payment.create({
+    await prismaWithRetry.payment.create({
       data: {
         order_id: orderId,
         mp_payment_id: paymentData.id.toString(),

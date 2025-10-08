@@ -11,7 +11,14 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
     db: {
       url: process.env.DATABASE_URL
     }
-  }
+  },
+  // Configurações para resolver problemas de prepared statements em produção
+  ...(process.env.NODE_ENV === 'production' && {
+    transactionOptions: {
+      maxWait: 5000,
+      timeout: 10000,
+    },
+  })
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +21,13 @@ export async function GET(request: NextRequest) {
     }
 
     const [products, total] = await Promise.all([
-      prisma.product.findMany({
+      prismaWithRetry.product.findMany({
         where,
         skip,
         take: limit,
         orderBy: { created_at: 'desc' }
       }),
-      prisma.product.count({ where })
+      prismaWithRetry.product.count({ where })
     ])
 
     const totalPages = Math.ceil(total / limit)

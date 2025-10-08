@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 import { validateCoupon, applyCoupon } from '@/lib/coupons'
 import { createOrderPreference } from '@/lib/mercadopago'
 import { formatCurrency } from '@/lib/utils'
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Verificar se todos os produtos existem e têm estoque suficiente
     for (const item of orderData.items) {
-      const product = await prisma.product.findUnique({
+      const product = await prismaWithRetry.product.findUnique({
         where: { id: item.id }
       })
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Criar o pedido no banco de dados
-    const order = await prisma.order.create({
+    const order = await prismaWithRetry.order.create({
       data: {
         user_id: (session as any).user.id,
         status: 'PENDING',
