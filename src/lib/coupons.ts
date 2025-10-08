@@ -1,4 +1,4 @@
-import { prisma } from './prisma'
+import { prismaWithRetry } from './prisma-utils'
 import { generateCouponCode, addDays } from './utils'
 import { sendEmail, generateCouponEmailTemplate } from './email'
 import { formatCurrency } from './utils'
@@ -14,7 +14,7 @@ export async function createCoupon(data: CreateCouponData) {
   const code = generateCouponCode()
   const expiresAt = addDays(new Date(), data.expirationDays || 30)
 
-  const coupon = await prisma.coupon.create({
+  const coupon = await prismaWithRetry.coupon.create({
     data: {
       code,
       face_value_cents: data.faceValueCents,
@@ -26,7 +26,7 @@ export async function createCoupon(data: CreateCouponData) {
     include: {
       buyer: true
     }
-  })
+  }) as any
 
   // Enviar email se houver comprador
   if (coupon.buyer) {
@@ -52,7 +52,7 @@ export async function createCoupon(data: CreateCouponData) {
 }
 
 export async function validateCoupon(code: string) {
-  const coupon = await prisma.coupon.findUnique({
+  const coupon = await prismaWithRetry.coupon.findUnique({
     where: { code: code.toUpperCase() }
   })
 
@@ -66,7 +66,7 @@ export async function validateCoupon(code: string) {
 
   if (new Date() > coupon.expires_at) {
     // Marcar como expirado
-    await prisma.coupon.update({
+    await prismaWithRetry.coupon.update({
       where: { id: coupon.id },
       data: { status: 'EXPIRED' }
     })
@@ -86,7 +86,7 @@ export async function applyCoupon(code: string, orderId: string) {
   const { coupon } = validation
 
   // Marcar cupom como usado
-  const updatedCoupon = await prisma.coupon.update({
+  const updatedCoupon = await prismaWithRetry.coupon.update({
     where: { id: coupon!.id },
     data: {
       status: 'USED',
@@ -99,7 +99,7 @@ export async function applyCoupon(code: string, orderId: string) {
 }
 
 export async function getUserCoupons(userId: string) {
-  return prisma.coupon.findMany({
+  return prismaWithRetry.coupon.findMany({
     where: { buyer_id: userId },
     orderBy: { created_at: 'desc' }
   })
@@ -107,13 +107,13 @@ export async function getUserCoupons(userId: string) {
 
 export async function getCouponStats() {
   const [total, available, used, expired] = await Promise.all([
-    prisma.coupon.count(),
-    prisma.coupon.count({ where: { status: 'AVAILABLE' } }),
-    prisma.coupon.count({ where: { status: 'USED' } }),
-    prisma.coupon.count({ where: { status: 'EXPIRED' } })
+    prismaWithRetry.coupon.count(),
+    prismaWithRetry.coupon.count({ where: { status: 'AVAILABLE' } }),
+    prismaWithRetry.coupon.count({ where: { status: 'USED' } }),
+    prismaWithRetry.coupon.count({ where: { status: 'EXPIRED' } })
   ])
 
-  const totalRevenue = await prisma.coupon.aggregate({
+  const totalRevenue = await prismaWithRetry.coupon.aggregate({
     where: { status: 'USED' },
     _sum: { sale_price_cents: true }
   })
@@ -123,12 +123,12 @@ export async function getCouponStats() {
     available,
     used,
     expired,
-    revenue: totalRevenue._sum.sale_price_cents || 0
+    revenue: totalRevenue._sum?.sale_price_cents || 0
   }
 }
 
 export async function expireOldCoupons() {
-  const expiredCoupons = await prisma.coupon.updateMany({
+  const expiredCoupons = await prismaWithRetry.coupon.updateMany({
     where: {
       status: 'AVAILABLE',
       expires_at: {

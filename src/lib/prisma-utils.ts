@@ -62,6 +62,8 @@ export const prismaWithRetry = {
     findUnique: (args: any) => executeWithRetry(() => prisma.coupon.findUnique(args)),
     create: (args: any) => executeWithRetry(() => prisma.coupon.create(args)),
     update: (args: any) => executeWithRetry(() => prisma.coupon.update(args)),
+    updateMany: (args: any) => executeWithRetry(() => prisma.coupon.updateMany(args)),
+    aggregate: (args: any) => executeWithRetry(() => prisma.coupon.aggregate(args)),
     delete: (args: any) => executeWithRetry(() => prisma.coupon.delete(args))
   },
   

@@ -1,5 +1,5 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { prisma } from './prisma'
+import { prismaWithRetry } from './prisma-utils'
 import bcrypt from 'bcryptjs'
 
 export const authOptions = {
@@ -16,7 +16,7 @@ export const authOptions = {
             return null
           }
 
-          const user = await prisma.user.findUnique({
+          const user = await prismaWithRetry.user.findUnique({
             where: {
               email: credentials.email
             }
