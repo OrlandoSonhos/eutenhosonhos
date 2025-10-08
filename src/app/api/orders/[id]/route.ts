@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +19,7 @@ export async function GET(
 
     const { id } = await params
 
-    const order = await prisma.order.findFirst({
+    const order = await prismaWithRetry.order.findFirst({
       where: {
         id: id,
         user_id: (session as any).user.id

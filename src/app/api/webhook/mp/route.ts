@@ -128,7 +128,7 @@ async function processOrderPayment(paymentData: any) {
           include: { product: true }
         }
       }
-    })
+    }) as any
 
     if (!order) {
       console.error('Pedido não encontrado:', orderId)

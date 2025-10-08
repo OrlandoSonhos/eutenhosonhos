@@ -49,6 +49,7 @@ export const prismaWithRetry = {
   order: {
     count: (args?: any) => executeWithRetry(() => prisma.order.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.order.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.order.findFirst(args)),
     findUnique: (args: any) => executeWithRetry(() => prisma.order.findUnique(args)),
     create: (args: any) => executeWithRetry(() => prisma.order.create(args)),
     update: (args: any) => executeWithRetry(() => prisma.order.update(args)),
@@ -67,6 +68,7 @@ export const prismaWithRetry = {
   payment: {
     count: (args?: any) => executeWithRetry(() => prisma.payment.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.payment.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.payment.findFirst(args)),
     findUnique: (args: any) => executeWithRetry(() => prisma.payment.findUnique(args)),
     create: (args: any) => executeWithRetry(() => prisma.payment.create(args)),
     update: (args: any) => executeWithRetry(() => prisma.payment.update(args)),
