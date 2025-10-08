@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 
 // GET - Estatísticas de produtos
 export async function GET(request: NextRequest) {
@@ -27,19 +27,19 @@ export async function GET(request: NextRequest) {
       recentProducts
     ] = await Promise.all([
       // Total de produtos
-      prisma.product.count(),
+      prismaWithRetry.product.count(),
       
       // Produtos ativos
-      prisma.product.count({ where: { active: true } }),
+      prismaWithRetry.product.count({ where: { active: true } }),
       
       // Produtos inativos
-      prisma.product.count({ where: { active: false } }),
+      prismaWithRetry.product.count({ where: { active: false } }),
       
       // Produtos sem estoque
-      prisma.product.count({ where: { stock: 0 } }),
+      prismaWithRetry.product.count({ where: { stock: 0 } }),
       
       // Receita total
-      prisma.orderItem.aggregate({
+      prismaWithRetry.orderItem.aggregate({
         _sum: {
           price_cents: true
         },
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Total de vendas
-      prisma.orderItem.aggregate({
+      prismaWithRetry.orderItem.aggregate({
         _sum: {
           quantity: true
         },
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
       }),
       
       // Produtos mais vendidos
-      prisma.product.findMany({
+      prismaWithRetry.product.findMany({
         include: {
           order_items: {
             where: {
@@ -90,10 +90,10 @@ export async function GET(request: NextRequest) {
           }
         },
         take: 5
-      }),
+      }) as any,
       
       // Produtos recentes
-      prisma.product.findMany({
+      prismaWithRetry.product.findMany({
         orderBy: { created_at: 'desc' },
         take: 5,
         include: {
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Estatísticas por categoria (se houver campo categoria no futuro)
-    const lowStockProducts = await prisma.product.findMany({
+    const lowStockProducts = await prismaWithRetry.product.findMany({
       where: {
         stock: {
           lte: 5,
@@ -146,8 +146,8 @@ export async function GET(request: NextRequest) {
         active_products: activeProducts,
         inactive_products: inactiveProducts,
         out_of_stock_products: outOfStockProducts,
-        total_revenue: totalRevenue._sum.price_cents || 0,
-        total_sales: totalSales._sum.quantity || 0
+        total_revenue: totalRevenue._sum?.price_cents || 0,
+        total_sales: totalSales._sum?.quantity || 0
       },
       top_selling_products: topProducts,
       recent_products: recentProducts.map((product: any) => ({

@@ -84,5 +84,15 @@ export const prismaWithRetry = {
     create: (args: any) => executeWithRetry(() => prisma.product.create(args)),
     update: (args: any) => executeWithRetry(() => prisma.product.update(args)),
     delete: (args: any) => executeWithRetry(() => prisma.product.delete(args))
+  },
+
+  orderItem: {
+    count: (args?: any) => executeWithRetry(() => prisma.orderItem.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.orderItem.findMany(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.orderItem.findUnique(args)),
+    create: (args: any) => executeWithRetry(() => prisma.orderItem.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.orderItem.update(args)),
+    aggregate: (args: any) => executeWithRetry(() => prisma.orderItem.aggregate(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.orderItem.delete(args))
   }
 }

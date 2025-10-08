@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
 const createProductSchema = z.object({
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [products, total] = await Promise.all([
-      prisma.product.findMany({
+      prismaWithRetry.product.findMany({
         where,
         skip,
         take: limit,
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
           }
         }
       }),
-      prisma.product.count({ where })
+      prismaWithRetry.product.count({ where })
     ])
 
     return NextResponse.json({
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const productData = createProductSchema.parse(body)
 
-    const product = await prisma.product.create({
+    const product = await prismaWithRetry.product.create({
       data: {
         ...productData,
         images: JSON.stringify(productData.images)

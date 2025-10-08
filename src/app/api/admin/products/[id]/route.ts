@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
 const updateProductSchema = z.object({
@@ -30,7 +30,7 @@ export async function GET(
 
     const { id } = await params
 
-    const product = await prisma.product.findUnique({
+    const product = await (prismaWithRetry.product.findUnique as any)({
       where: { id: id },
       include: {
         order_items: {
@@ -97,7 +97,7 @@ export async function PUT(
     const productData = updateProductSchema.parse(body)
 
     // Verificar se o produto existe
-    const existingProduct = await prisma.product.findUnique({
+    const existingProduct = await prismaWithRetry.product.findUnique({
       where: { id: id }
     })
 
@@ -117,7 +117,7 @@ export async function PUT(
       updateData.images = JSON.stringify(productData.images)
     }
 
-    const product = await prisma.product.update({
+    const product = await prismaWithRetry.product.update({
       where: { id: id },
       data: updateData
     })
@@ -165,7 +165,7 @@ export async function DELETE(
     const { id } = await params
 
     // Verificar se o produto existe
-    const existingProduct = await prisma.product.findUnique({
+    const existingProduct = await (prismaWithRetry.product.findUnique as any)({
       where: { id: id },
       include: {
         _count: {
@@ -189,7 +189,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.product.delete({
+    await prismaWithRetry.product.delete({
       where: { id: id }
     })
 
