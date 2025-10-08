@@ -33,6 +33,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Debug: verificar se o user.id existe
+    console.log('Session:', JSON.stringify(session, null, 2))
+    const userId = (session as any).user?.id
+    
+    if (!userId) {
+      console.error('User ID não encontrado na sessão:', session)
+      return NextResponse.json(
+        { error: 'ID do usuário não encontrado na sessão' },
+        { status: 400 }
+      )
+    }
+
+    // Verificar se o usuário existe no banco
+    const userExists = await prismaWithRetry.user.findUnique({
+      where: { id: userId }
+    })
+
+    if (!userExists) {
+      console.error('Usuário não encontrado no banco:', userId)
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
     const orderData = createOrderSchema.parse(body)
 
@@ -80,7 +105,7 @@ export async function POST(request: NextRequest) {
     // Criar o pedido no banco de dados
     const order = await prismaWithRetry.order.create({
       data: {
-        user_id: (session as any).user.id,
+        user_id: userId,
         status: 'PENDING',
         total_cents: orderData.total,
         order_items: {
