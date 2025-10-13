@@ -64,8 +64,8 @@ export default function AdminUsersPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'ADMIN': return 'text-purple-600 bg-purple-100'
-      case 'USER': return 'text-blue-600 bg-blue-100'
+      case 'ADMIN': return 'text-brand-accent bg-brand-accent'
+    case 'USER': return 'text-brand-primary bg-brand-primary'
       default: return 'text-gray-600 bg-gray-100'
     }
   }
@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
               onClick={() => setFilter('ALL')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'ALL' 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-brand-primary text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
               onClick={() => setFilter('USER')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'USER' 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-brand-primary text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -130,7 +130,7 @@ export default function AdminUsersPage() {
               onClick={() => setFilter('ADMIN')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'ADMIN' 
-                  ? 'bg-purple-600 text-white' 
+                  ? 'bg-brand-accent text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -161,7 +161,7 @@ export default function AdminUsersPage() {
                     Pedidos
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cupons
+                    Cartões
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Data de Cadastro
@@ -199,7 +199,7 @@ export default function AdminUsersPage() {
                         <select
                           value={user.role}
                           onChange={(e) => updateUserRole(user.id, e.target.value as 'USER' | 'ADMIN')}
-                          className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-primary"
                         >
                           <option value="USER">Usuário</option>
                           <option value="ADMIN">Administrador</option>

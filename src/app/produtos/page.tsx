@@ -89,7 +89,7 @@ export default function ProductsPage() {
             Nossos Produtos
           </h1>
           <p className="text-gray-600">
-            Descubra nossa seleção de produtos e use seus cupons para economizar!
+            Descubra nossa seleção de produtos e use seus cartões de desconto para economizar!
           </p>
         </div>
 
@@ -103,12 +103,12 @@ export default function ProductsPage() {
                 placeholder="Buscar produtos..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
               />
             </div>
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
             >
               Buscar
             </button>
@@ -152,12 +152,12 @@ export default function ProductsPage() {
                         <span className="text-gray-400 text-sm">Imagem do produto</span>
                       </div>
                       {product.stock <= 5 && product.stock > 0 && (
-                        <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
-                          Últimas unidades
-                        </div>
-                      )}
-                      {product.stock === 0 && (
-                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <div className="absolute top-2 right-2 bg-warning text-white px-2 py-1 rounded text-xs font-medium">
+                Últimas unidades
+              </div>
+            )}
+            {product.stock === 0 && (
+              <div className="absolute top-2 right-2 bg-error text-white px-2 py-1 rounded text-xs font-medium">
                           Esgotado
                         </div>
                       )}
@@ -166,7 +166,7 @@ export default function ProductsPage() {
                   
                   <div className="p-4">
                     <Link href={`/produtos/${product.id}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-indigo-600 transition-colors">
+                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-brand-primary transition-colors">
                         {product.title}
                       </h3>
                     </Link>
@@ -174,12 +174,12 @@ export default function ProductsPage() {
                       {product.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <div className="text-lg font-bold text-indigo-600">
+                      <div className="text-lg font-bold text-brand-primary">
                         {formatCurrency(product.price_cents)}
                       </div>
                       <Link
                         href={`/produtos/${product.id}`}
-                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center text-sm"
+                        className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center text-sm"
                       >
                         <ShoppingCart className="w-4 h-4 mr-1" />
                         Ver
@@ -213,7 +213,7 @@ export default function ProductsPage() {
                         onClick={() => handlePageChange(page)}
                         className={`px-3 py-2 rounded-lg ${
                           page === pagination.page
-                            ? 'bg-indigo-600 text-white'
+                            ? 'bg-brand-primary text-white'
                             : 'border border-gray-300 hover:bg-gray-50'
                         }`}
                       >

@@ -1,83 +1,243 @@
 import Link from "next/link"
 import { ProductGrid } from "@/components/product-grid"
 import { HeroSection } from "@/components/hero-section"
+import { ParallaxSection } from "@/components/parallax-section"
+import { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Eu tenho Sonhos - Cartões de Desconto e Leilões Diários | Economize até 80%",
+  description: "Compre cartões de desconto pré-pagos com até 80% de economia. Participe de leilões diários com cupons especiais de 50% off. Produtos exclusivos e ofertas imperdíveis.",
+  keywords: "cartões de desconto, cupons de desconto, leilão diário, ofertas especiais, economia, compras online, desconto 80%, cupom 50%",
+  openGraph: {
+    title: "Cartões de Desconto e Leilões | Eu tenho Sonhos",
+    description: "Economize até 80% com cartões pré-pagos e participe de leilões com cupons de 50% off",
+    type: "website",
+  },
+}
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Eu tenho Sonhos",
+  "url": "https://eutenhossonhos.com.br",
+  "description": "Loja online especializada em cartões de desconto pré-pagos e leilões diários",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "https://eutenhossonhos.com.br/produtos?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  },
+  "offers": {
+    "@type": "AggregateOffer",
+    "priceCurrency": "BRL",
+    "lowPrice": "5",
+    "highPrice": "200",
+    "offerCount": "4"
+  }
+}
+
+const organizationData = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Eu tenho Sonhos",
+  "url": "https://eutenhossonhos.com.br",
+  "logo": "https://eutenhossonhos.com.br/logo.png",
+  "description": "Loja online de cartões de desconto pré-pagos e produtos exclusivos",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "customer service",
+    "availableLanguage": "Portuguese"
+  }
+}
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <HeroSection />
+    <>
+      {/* Dados Estruturados para SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
+      />
 
-      {/* Produtos em Destaque */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Produtos em Destaque
-            </h2>
-            <p className="text-lg text-gray-600">
-              Descubra nossa seleção especial de produtos
-            </p>
-          </div>
-          
-          <ProductGrid />
-          
-          <div className="text-center mt-12">
-            <Link
-              href="/produtos"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
-            >
-              Ver Todos os Produtos
-            </Link>
-          </div>
-        </div>
-      </section>
+      <div className="min-h-screen">
+        {/* Hero Section */}
+        <HeroSection />
 
-      {/* Seção de Cupons */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Cupons Pré-pagos
-            </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Compre cupons com desconto e economize nas suas compras
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { value: 'R$ 25', price: 'R$ 5', discount: '80%' },
-              { value: 'R$ 50', price: 'R$ 10', discount: '80%' },
-              { value: 'R$ 100', price: 'R$ 20', discount: '80%' },
-              { value: 'R$ 200', price: 'R$ 40', discount: '80%' }
-            ].map((coupon, index) => (
-              <div key={index} className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg p-6 text-white text-center">
-                <div className="text-2xl font-bold mb-2">{coupon.value}</div>
-                <div className="text-sm opacity-90 mb-4">por apenas {coupon.price}</div>
-                <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium mb-4">
-                  {coupon.discount} OFF
-                </div>
-                <Link
-                  href="/cupons"
-                  className="block w-full bg-white text-indigo-600 py-2 rounded-md font-medium hover:bg-gray-100 transition-colors"
-                >
-                  Comprar
-                </Link>
+        {/* Seção de Cartões de Desconto */}
+        <ParallaxSection speed={0.15} className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header className="text-center mb-12">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Cartões de Desconto Pré-Pagos
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                Economize até <strong>80% nas suas compras</strong> com nossos cartões de desconto pré-pagos. 
+                Compre agora e use quando quiser em nossa loja online.
+              </p>
+              <div className="bg-brand-accent/10 border border-brand-accent rounded-lg p-4 inline-block">
+                <p className="text-brand-accent-dark font-medium">
+                  🎯 <strong>Leilões Diários:</strong> Cupons especiais de 50% OFF em produtos selecionados!
+                </p>
               </div>
-            ))}
+            </header>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
+              {[
+                { value: 'R$ 25', price: 'R$ 5', discount: '80%', savings: 'R$ 20' },
+                { value: 'R$ 50', price: 'R$ 10', discount: '80%', savings: 'R$ 40' },
+                { value: 'R$ 100', price: 'R$ 20', discount: '80%', savings: 'R$ 80' },
+                { value: 'R$ 200', price: 'R$ 40', discount: '80%', savings: 'R$ 160' }
+              ].map((coupon, index) => (
+                <article 
+                  key={index} 
+                  className="bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-lg p-6 text-white text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                  role="listitem"
+                >
+                  <div className="text-3xl font-bold mb-2" aria-label={`Cartão de ${coupon.value}`}>
+                    {coupon.value}
+                  </div>
+                  <div className="text-sm opacity-90 mb-2">
+                    por apenas <span className="font-bold text-lg">{coupon.price}</span>
+                  </div>
+                  <div className="text-xs mb-4">
+                    Você economiza <strong>{coupon.savings}</strong>
+                  </div>
+                  <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium mb-4">
+                    {coupon.discount} OFF
+                  </div>
+                  <Link
+                    href="/cupons"
+                    className="block w-full bg-white text-brand-primary py-2 rounded-md font-medium hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
+                    aria-label={`Comprar cartão de desconto de ${coupon.value}`}
+                  >
+                    Comprar Agora
+                  </Link>
+                </article>
+              ))}
+            </div>
+            
+            <div className="text-center mt-12">
+              <Link
+                href="/cupons"
+                className="inline-flex items-center px-8 py-4 border-2 border-brand-primary text-lg font-medium rounded-md text-brand-primary bg-white hover:bg-brand-primary hover:text-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                aria-label="Ver todos os cartões de desconto disponíveis"
+              >
+                Ver Todos os Cartões de Desconto
+              </Link>
+            </div>
           </div>
-          
-          <div className="text-center mt-12">
+        </ParallaxSection>
+
+        {/* Produtos em Destaque */}
+        <section className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <header className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                Produtos em Destaque
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+                Descubra nossa seleção especial de produtos com os melhores preços. 
+                Use seus cartões de desconto e economize ainda mais!
+              </p>
+            </header>
+            
+            <ProductGrid />
+            
+            <div className="text-center mt-16">
+              <Link
+                href="/produtos"
+                className="btn-primary px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 inline-flex items-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                aria-label="Ver todos os produtos disponíveis na loja"
+              >
+                Ver Todos os Produtos
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Seção de Leilões */}
+        <section className="py-20 bg-brand-gradient relative overflow-hidden">
+          <div className="absolute inset-0 bg-black/5"></div>
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
+            <h2 className="text-3xl md:text-4xl font-bold mb-8">
+              🎯 Leilões Diários Especiais
+            </h2>
+            <p className="text-xl mb-12 max-w-3xl mx-auto leading-relaxed">
+              Participe dos nossos leilões diários e ganhe cupons de <strong>50% de desconto</strong> 
+              em produtos selecionados. Ofertas por tempo limitado!
+            </p>
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-8 max-w-lg mx-auto mb-12 shadow-xl">
+              <h3 className="text-2xl font-bold mb-6">Como Funciona:</h3>
+              <ul className="text-left space-y-3 text-lg">
+                <li className="flex items-center">
+                  <span className="text-brand-accent mr-3">✅</span>
+                  Produtos marcados como "Leilão"
+                </li>
+                <li className="flex items-center">
+                  <span className="text-brand-accent mr-3">✅</span>
+                  Cupom válido apenas na data do leilão
+                </li>
+                <li className="flex items-center">
+                  <span className="text-brand-accent mr-3">✅</span>
+                  Desconto de 50% aplicado automaticamente
+                </li>
+                <li className="flex items-center">
+                  <span className="text-brand-accent mr-3">✅</span>
+                  Estoque limitado por dia
+                </li>
+              </ul>
+            </div>
             <Link
-              href="/cupons"
-              className="inline-flex items-center px-6 py-3 border border-indigo-600 text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 transition-colors"
+              href="/leiloes"
+              className="inline-flex items-center px-8 py-4 bg-white text-brand-primary font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
+              aria-label="Ver leilões ativos hoje"
             >
-              Ver Todos os Cupons
+              Ver Leilões de Hoje
             </Link>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* FAQ Section para SEO */}
+        <section className="py-20 bg-white">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-16">
+              Perguntas Frequentes
+            </h2>
+            <div className="space-y-6">
+              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                  Como funcionam os cartões de desconto pré-pagos?
+                </summary>
+                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
+                  Você compra o cartão com desconto e recebe um código para usar nas suas compras. 
+                  O valor fica disponível na sua conta para usar quando quiser.
+                </p>
+              </details>
+              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                  O que são os leilões diários?
+                </summary>
+                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
+                  São produtos especiais com cupons de 50% de desconto, disponíveis apenas em datas específicas. 
+                  Cada produto tem sua data de leilão programada.
+                </p>
+              </details>
+              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
+                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                  Posso usar múltiplos cupons na mesma compra?
+                </summary>
+                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
+                  Você pode usar cartões de desconto normais (25%) a qualquer momento, mas os cupons de leilão (50%) 
+                  só funcionam em produtos específicos nas datas programadas.
+                </p>
+              </details>
+            </div>
+          </div>
+        </section>
+      </div>
+    </>
   )
 }

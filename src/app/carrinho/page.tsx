@@ -89,7 +89,7 @@ export default function CartPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
       </div>
     )
   }
@@ -115,7 +115,7 @@ export default function CartPage() {
             </p>
             <Link
               href="/produtos"
-              className="inline-flex items-center bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              className="inline-flex items-center bg-brand-primary text-white px-6 py-3 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors"
             >
               Continuar Comprando
               <ArrowRight className="w-5 h-5 ml-2" />
@@ -133,7 +133,7 @@ export default function CartPage() {
                     </h2>
                     <button
                       onClick={clearCart}
-                      className="text-red-600 hover:text-red-700 text-sm font-medium"
+                      className="text-error hover:text-error/80 text-sm font-medium"
                     >
                       Limpar Carrinho
                     </button>
@@ -154,7 +154,7 @@ export default function CartPage() {
                           <h3 className="text-lg font-medium text-gray-900 truncate">
                             {item.title}
                           </h3>
-                          <p className="text-indigo-600 font-semibold">
+                          <p className="text-brand-primary font-semibold">
                             {formatCurrency(item.price_cents)}
                           </p>
                           <p className="text-sm text-gray-500">
@@ -192,7 +192,7 @@ export default function CartPage() {
                         {/* Remove Button */}
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-red-600 hover:text-red-700 p-2"
+                          className="text-error hover:text-error/80 p-2"
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -206,7 +206,7 @@ export default function CartPage() {
               <div className="text-center">
                 <Link
                   href="/produtos"
-                  className="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="inline-flex items-center text-brand-primary hover:text-brand-primary/80 font-medium"
                 >
                   ← Continuar Comprando
                 </Link>
@@ -229,7 +229,7 @@ export default function CartPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Frete</span>
-                    <span className="font-medium text-green-600">
+                    <span className="font-medium text-success">
                       {getTotalPrice() >= 10000 ? 'Grátis' : formatCurrency(1000)}
                     </span>
                   </div>
@@ -241,7 +241,7 @@ export default function CartPage() {
                   <div className="border-t pt-3">
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total</span>
-                      <span className="text-indigo-600">
+                      <span className="text-brand-primary">
                         {formatCurrency(getTotalPrice() + (getTotalPrice() >= 10000 ? 0 : 1000))}
                       </span>
                     </div>
@@ -250,7 +250,7 @@ export default function CartPage() {
 
                 <Link
                   href="/checkout"
-                  className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-indigo-700 transition-colors text-center block"
+                  className="w-full bg-brand-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors text-center block"
                 >
                   Finalizar Compra
                 </Link>
@@ -262,18 +262,18 @@ export default function CartPage() {
                 </div>
 
                 {/* Coupon Info */}
-                <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h3 className="font-medium text-yellow-800 mb-2">
-                    💰 Tem cupons de desconto?
+                <div className="mt-6 p-4 bg-warning rounded-lg border border-warning">
+                  <h3 className="font-medium text-warning mb-2">
+                    💰 Tem cartões de desconto?
                   </h3>
-                  <p className="text-sm text-yellow-700">
-                    Você poderá aplicar seus cupons na próxima etapa do checkout.
+                  <p className="text-sm text-warning">
+                    Você poderá aplicar seus cartões na próxima etapa do checkout.
                   </p>
                   <Link
                     href="/meus-cupons"
-                    className="text-sm text-yellow-800 font-medium hover:underline"
+                    className="text-sm text-warning font-medium hover:underline"
                   >
-                    Ver meus cupons →
+                    Ver meus cartões →
                   </Link>
                 </div>
               </div>

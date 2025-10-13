@@ -17,7 +17,7 @@ interface Coupon {
   created_at: string
 }
 
-export default function MyCouponsPage() {
+export default function MyDiscountCardsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [coupons, setCoupons] = useState<Coupon[]>([])
@@ -41,7 +41,7 @@ export default function MyCouponsPage() {
       const data = await response.json()
       setCoupons(data.coupons || [])
     } catch (error) {
-      console.error('Erro ao carregar cupons:', error)
+      console.error('Erro ao carregar cartões:', error)
     } finally {
       setLoading(false)
     }
@@ -62,7 +62,7 @@ export default function MyCouponsPage() {
       case 'AVAILABLE':
         return {
           label: 'Disponível',
-          color: 'text-green-600 bg-green-100',
+          color: 'text-success bg-success',
           icon: Check
         }
       case 'USED':
@@ -74,7 +74,7 @@ export default function MyCouponsPage() {
       case 'EXPIRED':
         return {
           label: 'Expirado',
-          color: 'text-red-600 bg-red-100',
+          color: 'text-error bg-error',
           icon: X
         }
       default:
@@ -124,15 +124,15 @@ export default function MyCouponsPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] rounded-lg flex items-center justify-center shadow-lg">
               <Gift className="w-6 h-6 text-white" />
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Meus Cupons
+            Meus Cartões
           </h1>
           <p className="text-gray-600">
-            Gerencie seus cupons de desconto
+            Gerencie seus cartões de desconto
           </p>
         </div>
 
@@ -141,16 +141,16 @@ export default function MyCouponsPage() {
           <div className="bg-white rounded-lg shadow-md p-12 text-center">
             <Gift className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum cupom encontrado
+              Nenhum cartão encontrado
             </h3>
             <p className="text-gray-600 mb-6">
-              Você ainda não possui cupons. Que tal comprar alguns?
+              Você ainda não possui cartões de desconto. Que tal comprar alguns?
             </p>
             <button
               onClick={() => router.push('/cupons')}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              className="btn-primary px-6 py-3 rounded-lg font-medium transition-all"
             >
-              Comprar Cupons
+              Comprar Cartões
             </button>
           </div>
         ) : (
@@ -168,7 +168,7 @@ export default function MyCouponsPage() {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-3">
-                        <div className="text-2xl font-bold text-indigo-600 mr-4">
+                        <div className="text-2xl font-bold text-brand-primary mr-4">
                           {formatCurrency(coupon.face_value_cents)}
                         </div>
                         <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
@@ -190,7 +190,7 @@ export default function MyCouponsPage() {
                               title="Copiar código"
                             >
                               {copiedCode === coupon.code ? (
-                                <Check className="w-4 h-4 text-green-500" />
+                                <Check className="w-4 h-4 text-success" />
                               ) : (
                                 <Copy className="w-4 h-4" />
                               )}
@@ -200,7 +200,7 @@ export default function MyCouponsPage() {
                         
                         <div>
                           <span className="font-medium">Válido até:</span>
-                          <div className={`mt-1 ${isExpired ? 'text-red-600' : ''}`}>
+                          <div className={`mt-1 ${isExpired ? 'text-error' : ''}`}>
                             {formatDate(coupon.expires_at)}
                           </div>
                         </div>
@@ -227,7 +227,7 @@ export default function MyCouponsPage() {
                       <div className="mt-4 lg:mt-0 lg:ml-6">
                         <button
                           onClick={() => router.push('/')}
-                          className="w-full lg:w-auto bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                          className="w-full lg:w-auto bg-brand-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors"
                         >
                           Usar Cupom
                         </button>
@@ -244,14 +244,13 @@ export default function MyCouponsPage() {
         {coupons.length > 0 && (
           <div className="mt-12 bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Como usar seus cupons
+              Como usar seus cartões
             </h3>
             <div className="space-y-2 text-sm text-gray-600">
-              <p>• Adicione produtos ao carrinho</p>
-              <p>• No checkout, insira o código do cupom</p>
-              <p>• O desconto será aplicado automaticamente</p>
-              <p>• Cada cupom pode ser usado apenas uma vez</p>
-              <p>• Cupons expiram após 30 dias da compra</p>
+              <p>• Copie o código do cartão</p>
+              <p>• Cole no checkout para aplicar o desconto</p>
+              <p>• Cartões expiram após 30 dias da compra</p>
+              <p>• Cada cartão pode ser usado apenas uma vez</p>
             </div>
           </div>
         )}

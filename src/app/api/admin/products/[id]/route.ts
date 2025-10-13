@@ -10,7 +10,11 @@ const updateProductSchema = z.object({
   price_cents: z.number().min(1, 'Preço deve ser maior que zero').optional(),
   stock: z.number().min(0, 'Estoque não pode ser negativo').optional(),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória').optional(),
-  active: z.boolean().optional()
+  active: z.boolean().optional(),
+  category_id: z.number().nullable().optional(),
+  is_auction: z.boolean().optional(),
+  auction_date: z.string().datetime().nullable().optional(),
+  auction_end_date: z.string().datetime().nullable().optional()
 })
 
 // GET - Buscar produto específico (admin)
@@ -33,6 +37,13 @@ export async function GET(
     const product = await (prismaWithRetry.product.findUnique as any)({
       where: { id: id },
       include: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            description: true
+          }
+        },
         order_items: {
           include: {
             order: {
@@ -108,8 +119,54 @@ export async function PUT(
       )
     }
 
+    // Validar categoria se fornecida
+    if (productData.category_id !== undefined) {
+      if (productData.category_id !== null) {
+        const categoryExists = await prismaWithRetry.category.findUnique({
+          where: { id: productData.category_id },
+          select: {
+            id: true,
+            active: true
+          }
+        }) as { id: number; active: boolean } | null
+
+        if (!categoryExists) {
+          return NextResponse.json(
+            { error: 'Categoria não encontrada' },
+            { status: 400 }
+          )
+        }
+
+        if (!categoryExists.active) {
+          return NextResponse.json(
+            { error: 'Categoria não está ativa' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // Validar datas de leilão
+    if (productData.is_auction && productData.auction_date && productData.auction_end_date) {
+      const startDate = new Date(productData.auction_date)
+      const endDate = new Date(productData.auction_end_date)
+
+      if (endDate <= startDate) {
+        return NextResponse.json(
+          { error: 'A data de fim do leilão deve ser posterior à data de início' },
+          { status: 400 }
+        )
+      }
+    }
+
     const updateData: any = {
       ...productData
+    }
+    
+    // Se não é mais produto de leilão, limpar as datas
+    if (productData.is_auction === false) {
+      updateData.auction_date = null
+      updateData.auction_end_date = null
     }
     
     // Converter images array para string JSON se fornecido
@@ -117,10 +174,26 @@ export async function PUT(
       updateData.images = JSON.stringify(productData.images)
     }
 
+    // Converter datas para Date objects se fornecidas
+    if (productData.auction_date) {
+      updateData.auction_date = new Date(productData.auction_date)
+    }
+    if (productData.auction_end_date) {
+      updateData.auction_end_date = new Date(productData.auction_end_date)
+    }
+
     const product = await prismaWithRetry.product.update({
       where: { id: id },
-      data: updateData
-    })
+      data: updateData,
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    } as any)
 
     return NextResponse.json({
       success: true,

@@ -1,86 +1,83 @@
-import Link from 'next/link'
+import Image from 'next/image'
+import { Facebook, Instagram, Twitter } from 'lucide-react'
 
-export function Footer() {
+export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Logo e descrição */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">ES</span>
-              </div>
-              <span className="text-xl font-bold">Eu tenho Sonhos</span>
+    <footer className="bg-gray-50 border-t border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Conteúdo principal em linha horizontal */}
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+               <Image
+                 src="/logo.png"
+                 alt="Eu tenho Sonhos"
+                 width={400}
+                 height={120}
+                 className="h-18 w-auto"
+               />
+             </div>
+
+          {/* Links em linha horizontal */}
+          <div className="flex flex-wrap items-center justify-center gap-6 lg:gap-8">
+            <a href="/" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+              Início
+            </a>
+            <a href="/produtos" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+          Produtos
+        </a>
+        <a href="/cupons" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+          Cupons
+        </a>
+        <a href="/sobre" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+          Sobre
+        </a>
+        <a href="/contato" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+          Contato
+        </a>
+        <a href="/ajuda" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
+              Ajuda
+            </a>
+          </div>
+
+          {/* Redes Sociais e Copyright */}
+          <div className="flex-shrink-0 flex flex-col items-center lg:items-end gap-3">
+            {/* Redes Sociais */}
+            <div className="flex items-center gap-4">
+              <a 
+                href="https://facebook.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-brand-primary transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook size={20} />
+              </a>
+              <a 
+                href="https://instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-brand-accent transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram size={20} />
+              </a>
+              <a 
+                href="https://twitter.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-600 hover:text-brand-primary transition-colors"
+                aria-label="Twitter"
+              >
+                <Twitter size={20} />
+              </a>
             </div>
-            <p className="text-gray-400 mb-4">
-              Sua loja online de confiança com sistema exclusivo de cupons pré-pagos. 
-              Realize seus sonhos com descontos incríveis!
-            </p>
-            <p className="text-sm text-gray-500">
-              © 2024 Eu tenho Sonhos. Todos os direitos reservados.
+            
+            {/* Copyright */}
+            <p className="text-gray-500 text-xs text-center lg:text-right">
+              © 2024 Eu tenho Sonhos
             </p>
           </div>
-
-          {/* Links rápidos */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Links Rápidos</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                  Produtos
-                </Link>
-              </li>
-              <li>
-                <Link href="/cupons" className="text-gray-400 hover:text-white transition-colors">
-                  Cupons
-                </Link>
-              </li>
-              <li>
-                <Link href="/sobre" className="text-gray-400 hover:text-white transition-colors">
-                  Sobre Nós
-                </Link>
-              </li>
-              <li>
-                <Link href="/contato" className="text-gray-400 hover:text-white transition-colors">
-                  Contato
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Suporte */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Suporte</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/ajuda" className="text-gray-400 hover:text-white transition-colors">
-                  Central de Ajuda
-                </Link>
-              </li>
-              <li>
-                <Link href="/termos" className="text-gray-400 hover:text-white transition-colors">
-                  Termos de Uso
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacidade" className="text-gray-400 hover:text-white transition-colors">
-                  Política de Privacidade
-                </Link>
-              </li>
-              <li>
-                <Link href="/devolucoes" className="text-gray-400 hover:text-white transition-colors">
-                  Devoluções
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-          <p className="text-gray-400 text-sm">
-            Desenvolvido com ❤️ para realizar seus sonhos
-          </p>
         </div>
       </div>
     </footer>

@@ -14,7 +14,7 @@ function OrderErrorContent() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center">
           {/* Header de Erro */}
-          <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
+          <XCircle className="mx-auto h-16 w-16 text-error mb-4" />
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Erro no Pagamento
           </h1>
@@ -50,7 +50,7 @@ function OrderErrorContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/carrinho"
-              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-brand-primary hover:bg-brand-primary-dark transition-colors"
             >
               <RefreshCw className="mr-2 h-4 w-4" />
               Tentar Novamente

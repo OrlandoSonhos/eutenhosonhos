@@ -100,7 +100,7 @@ export default function ProductDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
       </div>
     )
   }
@@ -112,7 +112,7 @@ export default function ProductDetailPage() {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Produto não encontrado</h2>
           <Link
             href="/produtos"
-            className="text-indigo-600 hover:text-indigo-700"
+            className="text-brand-primary hover:text-brand-primary/80"
           >
             Voltar para produtos
           </Link>
@@ -128,7 +128,7 @@ export default function ProductDetailPage() {
         <div className="mb-6">
           <Link
             href="/produtos"
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4"
+            className="inline-flex items-center text-brand-primary hover:text-brand-primary/80 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar para produtos
@@ -174,7 +174,7 @@ export default function ProductDetailPage() {
                   <span className="ml-2 text-gray-600">(4.8) • 127 avaliações</span>
                 </div>
 
-                <div className="text-3xl font-bold text-indigo-600 mb-4">
+                <div className="text-3xl font-bold text-brand-primary mb-4">
                   {formatCurrency(product.price_cents)}
                 </div>
 
@@ -187,15 +187,15 @@ export default function ProductDetailPage() {
               <div className="flex items-center space-x-2">
                 {product.stock > 0 ? (
                   <>
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-green-700 font-medium">
+                    <div className="w-3 h-3 bg-success rounded-full"></div>
+                <span className="text-success font-medium">
                       {product.stock} unidades em estoque
                     </span>
                   </>
                 ) : (
                   <>
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span className="text-red-700 font-medium">Produto esgotado</span>
+                    <div className="w-3 h-3 bg-error rounded-full"></div>
+                <span className="text-error font-medium">Produto esgotado</span>
                   </>
                 )}
               </div>
@@ -232,7 +232,7 @@ export default function ProductDetailPage() {
                   <button
                     onClick={addToCart}
                     disabled={addingToCart}
-                    className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full bg-brand-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {addingToCart ? (
                       <>
@@ -256,16 +256,16 @@ export default function ProductDetailPage() {
                 </h3>
                 <div className="space-y-3">
                   <div className="flex items-center">
-                    <Shield className="w-5 h-5 text-green-500 mr-3" />
-                    <span className="text-gray-700">Garantia de 30 dias</span>
+                    <Shield className="w-5 h-5 text-success mr-3" />
+                    <span className="text-gray-700">Garantia de 1 ano</span>
                   </div>
                   <div className="flex items-center">
-                    <Truck className="w-5 h-5 text-blue-500 mr-3" />
-                    <span className="text-gray-700">Frete grátis acima de R$ 100</span>
+                    <Truck className="w-5 h-5 text-brand-primary mr-3" />
+                    <span className="text-gray-700">Frete grátis acima de R$ 200</span>
                   </div>
                   <div className="flex items-center">
-                    <Star className="w-5 h-5 text-yellow-500 mr-3" />
-                    <span className="text-gray-700">Use seus cupons para economizar</span>
+                    <Star className="w-5 h-5 text-brand-accent mr-3" />
+                    <span className="text-gray-700">Use seus cartões de desconto para economizar</span>
                   </div>
                 </div>
               </div>

@@ -163,19 +163,20 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gerenciar Produtos</h1>
-          <p className="text-gray-600">Gerencie todos os produtos da loja</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gerenciar Produtos</h1>
+          <p className="text-sm sm:text-base text-gray-600">Gerencie todos os produtos da loja</p>
         </div>
         <Link
           href="/admin/produtos/novo"
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 text-sm sm:text-base"
         >
-          <PlusIcon className="h-5 w-5" />
-          Novo Produto
+          <PlusIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="hidden sm:inline">Novo Produto</span>
+          <span className="sm:hidden">Novo</span>
         </Link>
       </div>
 
@@ -190,17 +191,17 @@ export default function AdminProductsPage() {
               placeholder="Buscar produtos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
             />
           </div>
 
           {/* Filtro de status */}
           <div className="flex items-center gap-2">
-            <FunnelIcon className="h-5 w-5 text-gray-400" />
+            <FunnelIcon className="h-5 w-5 text-gray-400 hidden sm:block" />
             <select
               value={activeFilter}
               onChange={(e) => setActiveFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base w-full sm:w-auto"
             >
               <option value="all">Todos</option>
               <option value="active">Ativos</option>
@@ -217,7 +218,8 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -316,6 +318,81 @@ export default function AdminProductsPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-4">
+        {products.map((product) => (
+          <div key={product.id} className="bg-white rounded-lg shadow-sm border p-4">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
+                <Image
+                  src={product.images[0] || '/placeholder-product.jpg'}
+                  alt={product.title}
+                  width={64}
+                  height={64}
+                  className="h-16 w-16 rounded-lg object-cover"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="text-sm font-medium text-gray-900 truncate">
+                      {product.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                      {product.description}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleProductStatus(product.id, product.active)}
+                    className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      product.active
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {product.active ? 'Ativo' : 'Inativo'}
+                  </button>
+                </div>
+                
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex space-x-4 text-xs text-gray-500">
+                    <span className="font-medium text-gray-900">
+                      {formatPrice(product.price_cents)}
+                    </span>
+                    <span>
+                      Estoque: <span className={product.stock <= 5 ? 'text-red-600' : 'text-gray-900'}>{product.stock}</span>
+                    </span>
+                    <span>Vendas: {product.sales_count}</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      href={`/admin/produtos/${product.id}`}
+                      className="text-blue-600 hover:text-blue-900 p-1"
+                    >
+                      <EyeIcon className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      href={`/admin/produtos/${product.id}/editar`}
+                      className="text-yellow-600 hover:text-yellow-900 p-1"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteProduct(product.id)}
+                      className="text-red-600 hover:text-red-900 p-1"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
         {/* Paginação */}
         {pagination.pages > 1 && (
@@ -384,7 +461,6 @@ export default function AdminProductsPage() {
             </div>
           </div>
         )}
-      </div>
 
       {products.length === 0 && !loading && (
         <div className="text-center py-12">

@@ -10,7 +10,8 @@ const createProductSchema = z.object({
   price_cents: z.number().min(1, 'Preço deve ser maior que zero'),
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória'),
-  active: z.boolean().default(true)
+  active: z.boolean().default(true),
+  category_id: z.number().optional()
 })
 
 // GET - Listar produtos (admin)
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
     const active = searchParams.get('active')
+    const categoryId = searchParams.get('category_id')
 
     const skip = (page - 1) * limit
 
@@ -40,7 +42,8 @@ export async function GET(request: NextRequest) {
           { description: { contains: search, mode: 'insensitive' as const } }
         ]
       }),
-      ...(active !== null && active !== undefined && { active: active === 'true' })
+      ...(active !== null && active !== undefined && { active: active === 'true' }),
+      ...(categoryId && { category_id: parseInt(categoryId) })
     }
 
     const [products, total] = await Promise.all([
@@ -50,11 +53,17 @@ export async function GET(request: NextRequest) {
         take: limit,
         orderBy: { created_at: 'desc' },
         include: {
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          },
           _count: {
             select: { order_items: true }
           }
         }
-      }),
+      } as any),
       prismaWithRetry.product.count({ where })
     ])
 
@@ -96,12 +105,45 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const productData = createProductSchema.parse(body)
 
+    // Validar se a categoria existe (se fornecida)
+    if (productData.category_id) {
+      const categoryExists = await prismaWithRetry.category.findUnique({
+        where: { id: productData.category_id },
+        select: {
+          id: true,
+          active: true
+        }
+      }) as { id: number; active: boolean } | null
+
+      if (!categoryExists) {
+        return NextResponse.json(
+          { error: 'Categoria não encontrada' },
+          { status: 400 }
+        )
+      }
+
+      if (!categoryExists.active) {
+        return NextResponse.json(
+          { error: 'Categoria não está ativa' },
+          { status: 400 }
+        )
+      }
+    }
+
     const product = await prismaWithRetry.product.create({
       data: {
         ...productData,
         images: JSON.stringify(productData.images)
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
-    })
+    } as any)
 
     return NextResponse.json({
       success: true,

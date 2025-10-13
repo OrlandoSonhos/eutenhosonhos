@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CreditCard, Gift, Check, X, AlertCircle, Truck, Shield } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import CartDiscountCouponForm from '@/components/CartDiscountCouponForm'
 
 interface CartItem {
   id: string
@@ -18,7 +19,9 @@ interface CartItem {
 interface AppliedCoupon {
   code: string
   discount: number
-  faceValue: number
+  faceValue?: number
+  type?: 'REGULAR_25' | 'AUCTION_50'
+  discountPercent?: number
 }
 
 export default function CheckoutPage() {
@@ -26,10 +29,8 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
-  const [couponLoading, setCouponLoading] = useState(false)
-  const [couponError, setCouponError] = useState('')
+  const [appliedDiscountCoupon, setAppliedDiscountCoupon] = useState<AppliedCoupon | null>(null)
   const [processingPayment, setProcessingPayment] = useState(false)
 
   useEffect(() => {
@@ -67,56 +68,27 @@ export default function CheckoutPage() {
   }
 
   const getDiscount = () => {
-    return appliedCoupon ? appliedCoupon.discount : 0
+    let totalDiscount = 0
+    if (appliedCoupon) totalDiscount += appliedCoupon.discount
+    if (appliedDiscountCoupon) totalDiscount += appliedDiscountCoupon.discount
+    return totalDiscount
   }
 
   const getTotal = () => {
     return Math.max(0, getSubtotal() + getShipping() - getDiscount())
   }
 
-  const applyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Digite um código de cupom')
-      return
-    }
-
-    setCouponLoading(true)
-    setCouponError('')
-
-    try {
-      const response = await fetch('/api/apply-coupon', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ code: couponCode.trim() })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setCouponError(data.error || 'Erro ao aplicar cupom')
-        return
-      }
-
-      setAppliedCoupon({
-        code: data.coupon.code,
-        discount: data.coupon.discount,
-        faceValue: data.coupon.faceValue
-      })
-      setCouponCode('')
-      setCouponError('')
-    } catch (error) {
-      console.error('Erro ao aplicar cupom:', error)
-      setCouponError('Erro ao aplicar cupom. Tente novamente.')
-    } finally {
-      setCouponLoading(false)
-    }
+  const handleDiscountCouponApplied = (couponData: any) => {
+    setAppliedDiscountCoupon({
+      code: couponData.code,
+      discount: couponData.discountAmount,
+      type: couponData.type,
+      discountPercent: couponData.discountPercent
+    })
   }
 
-  const removeCoupon = () => {
-    setAppliedCoupon(null)
-    setCouponError('')
+  const handleDiscountCouponRemoved = () => {
+    setAppliedDiscountCoupon(null)
   }
 
   const processPayment = async () => {
@@ -131,6 +103,7 @@ export default function CheckoutPage() {
       const orderData = {
         items: cartItems,
         couponCode: appliedCoupon?.code,
+        discountCouponCode: appliedDiscountCoupon?.code,
         subtotal: getSubtotal(),
         shipping: getShipping(),
         discount: getDiscount(),
@@ -171,7 +144,7 @@ export default function CheckoutPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
       </div>
     )
   }
@@ -179,7 +152,7 @@ export default function CheckoutPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary"></div>
       </div>
     )
   }
@@ -191,7 +164,7 @@ export default function CheckoutPage() {
         <div className="mb-8">
           <Link
             href="/carrinho"
-            className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4"
+            className="inline-flex items-center text-brand-primary hover:text-brand-primary/80 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar ao carrinho
@@ -230,70 +203,46 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Coupon Section */}
+            {/* Discount Coupon Section */}
             <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Gift className="w-5 h-5 mr-2" />
-                Cupom de Desconto
-              </h2>
+              <CartDiscountCouponForm
+                cartItems={cartItems}
+                onCouponApplied={handleDiscountCouponApplied}
+                onCouponRemoved={handleDiscountCouponRemoved}
+                appliedCoupon={appliedDiscountCoupon}
+              />
+            </div>
 
-              {appliedCoupon ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            {/* Regular Coupon Section */}
+            {appliedCoupon && (
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Gift className="w-5 h-5 mr-2" />
+                  Cartão de Desconto
+                </h2>
+                <div className="bg-success border border-success rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <Check className="w-5 h-5 text-green-500 mr-2" />
+                      <Check className="w-5 h-5 text-success mr-2" />
                       <div>
-                        <p className="text-sm font-medium text-green-800">
-                          Cupom aplicado: {appliedCoupon.code}
+                        <p className="text-sm font-medium text-success">
+                          Cartão aplicado: {appliedCoupon.code}
                         </p>
-                        <p className="text-sm text-green-600">
+                        <p className="text-sm text-success">
                           Desconto: {formatCurrency(appliedCoupon.discount)}
                         </p>
                       </div>
                     </div>
                     <button
-                      onClick={removeCoupon}
-                      className="text-green-600 hover:text-green-700"
+                      onClick={() => setAppliedCoupon(null)}
+                      className="text-success hover:text-success/80"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Digite o código do cupom"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      disabled={couponLoading}
-                    />
-                    <button
-                      onClick={applyCoupon}
-                      disabled={couponLoading || !couponCode.trim()}
-                      className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {couponLoading ? 'Aplicando...' : 'Aplicar'}
-                    </button>
-                  </div>
-
-                  {couponError && (
-                    <div className="flex items-center text-red-600 text-sm">
-                      <AlertCircle className="w-4 h-4 mr-2" />
-                      {couponError}
-                    </div>
-                  )}
-
-                  <div className="text-sm text-gray-500">
-                    <Link href="/meus-cupons" className="text-indigo-600 hover:text-indigo-700">
-                      Ver meus cupons disponíveis →
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Payment Section */}
@@ -312,22 +261,29 @@ export default function CheckoutPage() {
                 
                 <div className="flex justify-between">
                   <span className="text-gray-600">Frete</span>
-                  <span className={`font-medium ${getShipping() === 0 ? 'text-green-600' : ''}`}>
+                  <span className={`font-medium ${getShipping() === 0 ? 'text-success' : ''}`}>
                     {getShipping() === 0 ? 'Grátis' : formatCurrency(getShipping())}
                   </span>
                 </div>
 
+                {appliedDiscountCoupon && (
+                  <div className="flex justify-between text-success">
+                    <span>Cupom de Desconto ({appliedDiscountCoupon.code})</span>
+                    <span className="font-medium">-{formatCurrency(appliedDiscountCoupon.discount)}</span>
+                  </div>
+                )}
+
                 {appliedCoupon && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Desconto ({appliedCoupon.code})</span>
-                    <span className="font-medium">-{formatCurrency(getDiscount())}</span>
+                  <div className="flex justify-between text-success">
+                    <span>Cartão de Desconto ({appliedCoupon.code})</span>
+                    <span className="font-medium">-{formatCurrency(appliedCoupon.discount)}</span>
                   </div>
                 )}
 
                 <div className="border-t pt-3">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
-                    <span className="text-indigo-600">{formatCurrency(getTotal())}</span>
+                    <span className="text-brand-primary">{formatCurrency(getTotal())}</span>
                   </div>
                 </div>
               </div>
@@ -340,14 +296,14 @@ export default function CheckoutPage() {
                 Forma de Pagamento
               </h2>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center">
-                  <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center text-white text-xs font-bold mr-3">
-                    MP
-                  </div>
-                  <div>
-                    <p className="font-medium text-blue-800">Mercado Pago</p>
-                    <p className="text-sm text-blue-600">PIX, Cartão de Crédito e Débito</p>
+              <div className="bg-brand-primary/10 border border-brand-primary/20 rounded-lg p-4 mb-4">
+                  <div className="flex items-center">
+                    <div className="w-12 h-8 bg-brand-primary rounded flex items-center justify-center text-white text-xs font-bold mr-3">
+                      MP
+                    </div>
+                    <div>
+                      <p className="font-medium text-brand-primary">Mercado Pago</p>
+                      <p className="text-sm text-brand-primary/80">PIX, Cartão de Crédito e Débito</p>
                   </div>
                 </div>
               </div>
@@ -355,7 +311,7 @@ export default function CheckoutPage() {
               <button
                 onClick={processPayment}
                 disabled={processingPayment || cartItems.length === 0}
-                className="w-full bg-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="w-full bg-brand-primary text-white py-3 px-6 rounded-lg font-medium hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {processingPayment ? (
                   <>
@@ -380,16 +336,16 @@ export default function CheckoutPage() {
               <h3 className="font-medium text-gray-900 mb-3">Compra Segura</h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center">
-                  <Shield className="w-4 h-4 text-green-500 mr-2" />
+                  <Shield className="w-4 h-4 text-success mr-2" />
                   <span>Dados protegidos com criptografia SSL</span>
                 </div>
                 <div className="flex items-center">
-                  <Truck className="w-4 h-4 text-blue-500 mr-2" />
+                  <Truck className="w-4 h-4 text-brand-primary mr-2" />
                   <span>Frete grátis acima de {formatCurrency(10000)}</span>
                 </div>
                 <div className="flex items-center">
-                  <Gift className="w-4 h-4 text-purple-500 mr-2" />
-                  <span>Use cupons para economizar ainda mais</span>
+                  <Gift className="w-4 h-4 text-brand-accent mr-2" />
+                  <span>Use cartões de desconto para economizar ainda mais</span>
                 </div>
               </div>
             </div>

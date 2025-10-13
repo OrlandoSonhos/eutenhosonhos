@@ -2,7 +2,27 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1a1a;
+  
+  /* Cores da marca "Eu Tenho Sonhos" */
+  --primary-teal: #2d7d8e;
+  --primary-teal-dark: #1e5a68;
+  --primary-teal-light: #4a9fb0;
+  --accent-gold: #f4b942;
+  --accent-gold-dark: #e6a635;
+  --accent-gold-light: #f7c965;
+  
+  /* Cores complementares */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
 }
 
 @theme inline {
@@ -10,17 +30,107 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* Cores customizadas para Tailwind */
+  --color-primary: var(--primary-teal);
+  --color-primary-dark: var(--primary-teal-dark);
+  --color-primary-light: var(--primary-teal-light);
+  --color-accent: var(--accent-gold);
+  --color-accent-dark: var(--accent-gold-dark);
+  --color-accent-light: var(--accent-gold-light);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
 }
+
+/* Estilos para botões com tema da marca */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(45, 125, 142, 0.1), 0 2px 4px -1px rgba(45, 125, 142, 0.06);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--primary-teal-dark) 0%, var(--primary-teal) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(45, 125, 142, 0.1), 0 4px 6px -2px rgba(45, 125, 142, 0.05);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+  color: var(--gray-900);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(244, 185, 66, 0.1), 0 2px 4px -1px rgba(244, 185, 66, 0.06);
+}
+
+.btn-accent:hover {
+  background: linear-gradient(135deg, var(--accent-gold-dark) 0%, var(--accent-gold) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(244, 185, 66, 0.1), 0 4px 6px -2px rgba(244, 185, 66, 0.05);
+}
+
+/* Gradiente de fundo para seções especiais */
+.bg-brand-gradient {
+  background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-teal-dark) 50%, var(--accent-gold) 100%);
+}
+
+.bg-brand-gradient-light {
+  background: linear-gradient(135deg, var(--primary-teal-light) 0%, var(--accent-gold-light) 100%);
+}
+
+/* Classes utilitárias para padronização de cores */
+.text-brand-primary { color: var(--primary-teal); }
+.text-brand-primary-dark { color: var(--primary-teal-dark); }
+.text-brand-primary-light { color: var(--primary-teal-light); }
+.text-brand-accent { color: var(--accent-gold); }
+.text-brand-accent-dark { color: var(--accent-gold-dark); }
+
+.bg-brand-primary { background-color: var(--primary-teal); }
+.bg-brand-primary-dark { background-color: var(--primary-teal-dark); }
+.bg-brand-primary-light { background-color: var(--primary-teal-light); }
+.bg-brand-accent { background-color: var(--accent-gold); }
+.bg-brand-accent-dark { background-color: var(--accent-gold-dark); }
+
+.border-brand-primary { border-color: var(--primary-teal); }
+.border-brand-accent { border-color: var(--accent-gold); }
+
+.hover\:text-brand-primary:hover { color: var(--primary-teal); }
+.hover\:text-brand-primary-dark:hover { color: var(--primary-teal-dark); }
+.hover\:bg-brand-primary:hover { background-color: var(--primary-teal); }
+.hover\:bg-brand-primary-dark:hover { background-color: var(--primary-teal-dark); }
+
+.focus\:ring-brand-primary:focus { --tw-ring-color: var(--primary-teal); }
+.focus\:border-brand-primary:focus { border-color: var(--primary-teal); }
+
+/* Estados de sucesso, erro e aviso usando tons da paleta */
+.text-success { color: var(--primary-teal-dark); }
+.text-error { color: #8b5a3c; } /* Tom marrom derivado da paleta */
+.text-warning { color: var(--accent-gold-dark); }
+
+.bg-success { background-color: rgba(45, 125, 142, 0.1); }
+.bg-error { background-color: rgba(139, 90, 60, 0.1); }
+.bg-warning { background-color: rgba(244, 185, 66, 0.1); }
+
+.border-success { border-color: rgba(45, 125, 142, 0.3); }
+.border-error { border-color: rgba(139, 90, 60, 0.3); }
+.border-warning { border-color: rgba(244, 185, 66, 0.3); }

@@ -60,6 +60,7 @@ export const prismaWithRetry = {
     count: (args?: any) => executeWithRetry(() => prisma.coupon.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.coupon.findMany(args)),
     findUnique: (args: any) => executeWithRetry(() => prisma.coupon.findUnique(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.coupon.findFirst(args)),
     create: (args: any) => executeWithRetry(() => prisma.coupon.create(args)),
     update: (args: any) => executeWithRetry(() => prisma.coupon.update(args)),
     updateMany: (args: any) => executeWithRetry(() => prisma.coupon.updateMany(args)),
@@ -86,6 +87,18 @@ export const prismaWithRetry = {
     delete: (args: any) => executeWithRetry(() => prisma.product.delete(args))
   },
 
+  category: {
+    count: (args?: any) => executeWithRetry(() => prisma.category.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.category.findMany(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.category.findUnique(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.category.findFirst(args)),
+    create: (args: any) => executeWithRetry(() => prisma.category.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.category.update(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.category.delete(args))
+  },
+
+
+
   orderItem: {
     count: (args?: any) => executeWithRetry(() => prisma.orderItem.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.orderItem.findMany(args)),
@@ -94,5 +107,8 @@ export const prismaWithRetry = {
     update: (args: any) => executeWithRetry(() => prisma.orderItem.update(args)),
     aggregate: (args: any) => executeWithRetry(() => prisma.orderItem.aggregate(args)),
     delete: (args: any) => executeWithRetry(() => prisma.orderItem.delete(args))
-  }
+  },
+
+  $transaction: prisma.$transaction.bind(prisma),
+  $disconnect: prisma.$disconnect.bind(prisma),
 }

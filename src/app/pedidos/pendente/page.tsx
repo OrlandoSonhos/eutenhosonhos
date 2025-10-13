@@ -80,7 +80,7 @@ function OrderPendingContent() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header de Pendente */}
           <div className="text-center mb-8">
-            <Clock className="mx-auto h-16 w-16 text-yellow-500 mb-4" />
+            <Clock className="mx-auto h-16 w-16 text-warning mb-4" />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Pagamento Pendente
             </h1>
@@ -157,7 +157,7 @@ function OrderPendingContent() {
             </button>
             <Link
               href="/meus-pedidos"
-              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-yellow-600 hover:bg-yellow-700 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-warning hover:bg-warning/80 transition-colors"
             >
               Ver Meus Pedidos
               <ArrowRight className="ml-2 h-4 w-4" />

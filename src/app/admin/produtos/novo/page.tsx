@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -12,6 +12,12 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline'
 
+interface Category {
+  id: number
+  name: string
+  description?: string
+}
+
 interface ProductForm {
   title: string
   description: string
@@ -19,6 +25,7 @@ interface ProductForm {
   stock: number
   images: string[]
   active: boolean
+  category_id?: number
 }
 
 export default function NewProductPage() {
@@ -27,14 +34,36 @@ export default function NewProductPage() {
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState('')
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
   const [form, setForm] = useState<ProductForm>({
     title: '',
     description: '',
     price_cents: 0,
     stock: 0,
     images: [],
-    active: true
+    active: true,
+    category_id: undefined
   })
+
+  // Carregar categorias
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/admin/categories')
+        if (response.ok) {
+          const data = await response.json()
+          setCategories(data.categories || [])
+        }
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error)
+      } finally {
+        setLoadingCategories(false)
+      }
+    }
+
+    fetchCategories()
+  }, [])
 
   // Upload de imagem
   const handleImageUpload = async (file: File) => {
@@ -229,6 +258,32 @@ export default function NewProductPage() {
                 placeholder="0"
                 required
               />
+            </div>
+
+            {/* Categoria */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Categoria
+              </label>
+              <select
+                value={form.category_id || ''}
+                onChange={(e) => setForm(prev => ({ 
+                  ...prev, 
+                  category_id: e.target.value ? parseInt(e.target.value) : undefined 
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={loadingCategories}
+              >
+                <option value="">Selecione uma categoria (opcional)</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {loadingCategories && (
+                <p className="text-sm text-gray-500 mt-1">Carregando categorias...</p>
+              )}
             </div>
 
             {/* Status */}

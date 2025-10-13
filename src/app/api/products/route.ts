@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const search = searchParams.get('search') || ''
+    const category = searchParams.get('category')
 
     const skip = (page - 1) * limit
 
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
           { title: { contains: search } },
           { description: { contains: search } }
         ]
-      })
+      }),
+      ...(category && { category_id: parseInt(category) })
     }
 
     const [products, total] = await Promise.all([
@@ -25,7 +27,15 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        orderBy: { created_at: 'desc' }
+        orderBy: { created_at: 'desc' },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
       }),
       prismaWithRetry.product.count({ where })
     ])

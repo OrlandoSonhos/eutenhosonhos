@@ -14,7 +14,7 @@ interface CouponType {
   description: string
 }
 
-export default function CouponsPage() {
+export default function DiscountCardsPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const [couponTypes, setCouponTypes] = useState<CouponType[]>([])
@@ -108,15 +108,15 @@ export default function CouponsPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] rounded-lg flex items-center justify-center shadow-lg">
               <Gift className="w-6 h-6 text-white" />
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Cupons Pré-pagos
+            Cartões de Desconto
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Compre cupons com desconto e economize nas suas compras. 
+            Compre cartões de desconto e economize nas suas compras. 
             Use quando quiser, válidos por 30 dias!
           </p>
         </div>
@@ -132,7 +132,7 @@ export default function CouponsPage() {
                 key={coupon.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-white text-center">
+                <div className="bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] p-6 text-white text-center">
                   <div className="text-3xl font-bold mb-2">
                     {formatCurrency(coupon.faceValueCents)}
                   </div>
@@ -151,15 +151,15 @@ export default function CouponsPage() {
                   
                   <div className="space-y-2 mb-6 text-sm text-gray-500">
                     <div className="flex items-center">
-                      <Check className="w-4 h-4 text-green-500 mr-2" />
+                      <Check className="w-4 h-4 text-success mr-2" />
                       Válido por 30 dias
                     </div>
                     <div className="flex items-center">
-                      <Check className="w-4 h-4 text-green-500 mr-2" />
+                      <Check className="w-4 h-4 text-success mr-2" />
                       Use quando quiser
                     </div>
                     <div className="flex items-center">
-                      <Check className="w-4 h-4 text-green-500 mr-2" />
+                      <Check className="w-4 h-4 text-success mr-2" />
                       Pagamento seguro
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export default function CouponsPage() {
                   <button
                     onClick={() => handleBuyCoupon(coupon.id)}
                     disabled={isPurchasing}
-                    className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full btn-primary py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {isPurchasing ? (
                       <>
@@ -194,17 +194,17 @@ export default function CouponsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 font-bold text-lg">1</span>
+              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-[var(--primary-teal)] font-bold text-lg">1</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Escolha seu cupom</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">Escolha seu cartão</h3>
               <p className="text-gray-600 text-sm">
-                Selecione o valor do cupom que deseja comprar
+                Selecione o valor do cartão de desconto que deseja comprar
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 font-bold text-lg">2</span>
+              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-[var(--primary-teal)] font-bold text-lg">2</span>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Pague com segurança</h3>
               <p className="text-gray-600 text-sm">
@@ -212,8 +212,8 @@ export default function CouponsPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-indigo-600 font-bold text-lg">3</span>
+              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <span className="text-[var(--primary-teal)] font-bold text-lg">3</span>
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Use quando quiser</h3>
               <p className="text-gray-600 text-sm">

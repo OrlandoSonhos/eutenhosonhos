@@ -98,7 +98,7 @@ export function ProductGrid() {
               {product.description}
             </p>
             <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-indigo-600">
+              <span className="text-lg font-bold text-brand-primary">
                 {formatCurrency(product.price_cents)}
               </span>
               <span className="text-sm text-gray-500">

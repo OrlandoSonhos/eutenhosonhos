@@ -80,7 +80,7 @@ function OrderSuccessContent() {
         <div className="bg-white rounded-lg shadow-lg p-8">
           {/* Header de Sucesso */}
           <div className="text-center mb-8">
-            <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+            <CheckCircle className="mx-auto h-16 w-16 text-success mb-4" />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Pedido Realizado com Sucesso!
             </h1>
@@ -146,7 +146,7 @@ function OrderSuccessContent() {
             </Link>
             <Link
               href="/meus-pedidos"
-              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-success hover:bg-success/80 transition-colors"
             >
               Ver Meus Pedidos
               <ArrowRight className="ml-2 h-4 w-4" />

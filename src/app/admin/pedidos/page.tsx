@@ -67,9 +67,9 @@ export default function AdminOrdersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return 'text-yellow-600 bg-yellow-100'
-      case 'PAID': return 'text-green-600 bg-green-100'
-      case 'CANCELLED': return 'text-red-600 bg-red-100'
+      case 'PENDING': return 'text-warning bg-warning'
+    case 'PAID': return 'text-success bg-success'
+    case 'CANCELLED': return 'text-error bg-error'
       default: return 'text-gray-600 bg-gray-100'
     }
   }
@@ -92,7 +92,7 @@ export default function AdminOrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default function AdminOrdersPage() {
               onClick={() => setFilter('ALL')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'ALL' 
-                  ? 'bg-blue-600 text-white' 
+                  ? 'bg-brand-primary text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -125,7 +125,7 @@ export default function AdminOrdersPage() {
               onClick={() => setFilter('PENDING')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'PENDING' 
-                  ? 'bg-yellow-600 text-white' 
+                  ? 'bg-warning text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -135,7 +135,7 @@ export default function AdminOrdersPage() {
               onClick={() => setFilter('PAID')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'PAID' 
-                  ? 'bg-green-600 text-white' 
+                  ? 'bg-success text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
@@ -145,7 +145,7 @@ export default function AdminOrdersPage() {
               onClick={() => setFilter('CANCELLED')}
               className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'CANCELLED' 
-                  ? 'bg-red-600 text-white' 
+                  ? 'bg-error text-white' 
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
