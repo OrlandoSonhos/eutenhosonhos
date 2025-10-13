@@ -100,7 +100,7 @@ model Order {
   user_id        String
   total_cents    Int
   discount_cents Int         @default(0)
-  final_cents    Int?
+  final_cents    Int
   status         OrderStatus @default(PENDING)
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
