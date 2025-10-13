@@ -96,10 +96,10 @@ model Product {
 }
 
 model Order {
-  id          String      @id @default(cuid())
+  id             String      @id @default(cuid())
   user_id        String
   total_cents    Int
-  discount_cents Int      @default(0)
+  discount_cents Int         @default(0)
   final_cents    Int?
   status         OrderStatus @default(PENDING)
   created_at     DateTime    @default(now())
