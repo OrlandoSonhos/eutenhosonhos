@@ -74,29 +74,36 @@ model VerificationToken {
 }
 
 model Product {
-  id           String   @id @default(cuid())
-  title        String
-  description  String
-  price_cents  Int
-  stock        Int      @default(0)
-  images       String   // JSON string para armazenar array de imagens
-  active       Boolean  @default(true)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id               String    @id @default(cuid())
+  title            String
+  description      String
+  price_cents      Int
+  stock            Int       @default(0)
+  images           String    // JSON string para armazenar array de imagens
+  active           Boolean   @default(true)
+  category_id      String?
+  is_auction       Boolean   @default(false)
+  auction_date     DateTime?
+  auction_end_date DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
 
   // Relations
+  category    Category?   @relation(fields: [category_id], references: [id])
   order_items OrderItem[]
 
   @@map("products")
 }
 
 model Order {
-  id          String      @id @default(cuid())
-  user_id     String
-  total_cents Int
-  status      OrderStatus @default(PENDING)
-  created_at  DateTime    @default(now())
-  updated_at  DateTime    @updatedAt
+  id             String      @id @default(cuid())
+  user_id        String
+  total_cents    Int
+  discount_cents Int         @default(0)
+  final_cents    Int?
+  status         OrderStatus @default(PENDING)
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
 
   // Relations
   user         User        @relation(fields: [user_id], references: [id])
@@ -186,4 +193,17 @@ model Coupon {
   payment        Payment?
 
   @@map("coupons")
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  description String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
 }
