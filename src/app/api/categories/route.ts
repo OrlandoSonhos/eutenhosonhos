@@ -8,9 +8,6 @@ export async function GET(request: NextRequest) {
     const includeCount = searchParams.get('includeCount') === 'true'
 
     const categories = await prismaWithRetry.category.findMany({
-      where: {
-        active: true
-      },
       orderBy: {
         name: 'asc'
       },

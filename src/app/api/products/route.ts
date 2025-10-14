@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
           { description: { contains: search } }
         ]
       }),
-      ...(category && { category_id: parseInt(category) })
+      ...(category && { category_id: category })
     }
 
     const [products, total] = await Promise.all([
