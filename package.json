@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node scripts/setup-prod-schema.js && prisma generate",
+    "prebuild": "node scripts/setup-prod-schema.js && prisma generate && prisma db push",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
