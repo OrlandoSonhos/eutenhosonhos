@@ -61,6 +61,43 @@ async function main() {
 
   console.log('✅ Usuários de exemplo criados')
 
+  // Criar categorias de exemplo
+  const categories = [
+    {
+      name: 'Roupas',
+      description: 'Vestuário em geral'
+    },
+    {
+      name: 'Calçados',
+      description: 'Sapatos, tênis e sandálias'
+    },
+    {
+      name: 'Acessórios',
+      description: 'Bolsas, relógios e óculos'
+    },
+    {
+      name: 'Perfumaria',
+      description: 'Perfumes e cosméticos'
+    }
+  ]
+
+  // Verificar se já existem categorias
+  const existingCategories = await prisma.category.count()
+  let createdCategories: any[] = []
+  
+  if (existingCategories === 0) {
+    for (const category of categories) {
+      const created = await prisma.category.create({
+        data: category
+      })
+      createdCategories.push(created)
+    }
+  } else {
+    createdCategories = await prisma.category.findMany()
+  }
+
+  console.log('✅ Categorias de exemplo criadas')
+
   // Criar produtos de exemplo
   const products = [
     {
@@ -68,70 +105,80 @@ async function main() {
       description: 'Camiseta 100% algodão, confortável e durável',
       price_cents: 4999, // R$ 49,99
       stock: 50,
-      images: JSON.stringify(['/images/camiseta-basica.jpg'])
+      images: JSON.stringify(['/images/camiseta-basica.jpg']),
+      category_id: createdCategories[0]?.id // Roupas
     },
     {
       title: 'Calça Jeans',
       description: 'Calça jeans clássica, corte reto',
       price_cents: 12999, // R$ 129,99
       stock: 30,
-      images: JSON.stringify(['/images/calca-jeans.jpg'])
+      images: JSON.stringify(['/images/calca-jeans.jpg']),
+      category_id: createdCategories[0]?.id // Roupas
     },
     {
       title: 'Tênis Esportivo',
       description: 'Tênis confortável para atividades físicas',
       price_cents: 19999, // R$ 199,99
       stock: 25,
-      images: JSON.stringify(['/images/tenis-esportivo.jpg'])
+      images: JSON.stringify(['/images/tenis-esportivo.jpg']),
+      category_id: createdCategories[1]?.id // Calçados
     },
     {
       title: 'Jaqueta de Couro',
       description: 'Jaqueta de couro sintético, estilo moderno',
       price_cents: 24999, // R$ 249,99
       stock: 15,
-      images: JSON.stringify(['/images/jaqueta-couro.jpg'])
+      images: JSON.stringify(['/images/jaqueta-couro.jpg']),
+      category_id: createdCategories[0]?.id // Roupas
     },
     {
       title: 'Vestido Floral',
       description: 'Vestido leve com estampa floral',
       price_cents: 8999, // R$ 89,99
       stock: 40,
-      images: JSON.stringify(['/images/vestido-floral.jpg'])
+      images: JSON.stringify(['/images/vestido-floral.jpg']),
+      category_id: createdCategories[0]?.id // Roupas
     },
     {
       title: 'Relógio Digital',
       description: 'Relógio digital resistente à água',
       price_cents: 15999, // R$ 159,99
       stock: 20,
-      images: JSON.stringify(['/images/relogio-digital.jpg'])
+      images: JSON.stringify(['/images/relogio-digital.jpg']),
+      category_id: createdCategories[2]?.id // Acessórios
     },
     {
       title: 'Mochila Escolar',
       description: 'Mochila resistente com vários compartimentos',
       price_cents: 7999, // R$ 79,99
       stock: 35,
-      images: JSON.stringify(['/images/mochila-escolar.jpg'])
+      images: JSON.stringify(['/images/mochila-escolar.jpg']),
+      category_id: createdCategories[2]?.id // Acessórios
     },
     {
       title: 'Óculos de Sol',
       description: 'Óculos de sol com proteção UV',
       price_cents: 12999, // R$ 129,99
       stock: 45,
-      images: JSON.stringify(['/images/oculos-sol.jpg'])
+      images: JSON.stringify(['/images/oculos-sol.jpg']),
+      category_id: createdCategories[2]?.id // Acessórios
     },
     {
       title: 'Perfume Masculino',
       description: 'Perfume masculino com fragrância marcante',
       price_cents: 18999, // R$ 189,99
       stock: 30,
-      images: JSON.stringify(['/images/perfume-masculino.jpg'])
+      images: JSON.stringify(['/images/perfume-masculino.jpg']),
+      category_id: createdCategories[3]?.id // Perfumaria
     },
     {
       title: 'Bolsa Feminina',
       description: 'Bolsa elegante para o dia a dia',
       price_cents: 16999, // R$ 169,99
       stock: 25,
-      images: JSON.stringify(['/images/bolsa-feminina.jpg'])
+      images: JSON.stringify(['/images/bolsa-feminina.jpg']),
+      category_id: createdCategories[2]?.id // Acessórios
     }
   ]
 
