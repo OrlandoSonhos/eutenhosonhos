@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { writeFile, mkdir, unlink } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
 
 // POST - Upload de imagem de produto
 export async function POST(request: NextRequest) {
@@ -48,27 +45,19 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
-    // Gerar nome único para o arquivo
+    // Converter para base64 para compatibilidade com Vercel
+    const base64 = buffer.toString('base64')
+    const mimeType = file.type
+    const dataUrl = `data:${mimeType};base64,${base64}`
+
+    // Gerar nome único para referência
     const timestamp = Date.now()
     const extension = file.name.split('.').pop()
     const filename = `product_${timestamp}.${extension}`
 
-    // Criar diretório se não existir
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'products')
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true })
-    }
-
-    // Salvar arquivo
-    const filepath = join(uploadDir, filename)
-    await writeFile(filepath, buffer)
-
-    // Retornar URL da imagem
-    const imageUrl = `/uploads/products/${filename}`
-
     return NextResponse.json({
       success: true,
-      url: imageUrl,
+      url: dataUrl,
       filename
     })
 
@@ -93,25 +82,10 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    const { searchParams } = new URL(request.url)
-    const filename = searchParams.get('filename')
-
-    if (!filename) {
-      return NextResponse.json(
-        { error: 'Nome do arquivo é obrigatório' },
-        { status: 400 }
-      )
-    }
-
-    const filepath = join(process.cwd(), 'public', 'uploads', 'products', filename)
-
-    if (existsSync(filepath)) {
-      await unlink(filepath)
-    }
-
+    // Como estamos usando base64, não há arquivo físico para excluir
     return NextResponse.json({
       success: true,
-      message: 'Imagem excluída com sucesso'
+      message: 'Imagem removida com sucesso'
     })
 
   } catch (error) {

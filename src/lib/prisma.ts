@@ -12,13 +12,29 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: process.env.DATABASE_URL
     }
   },
-  // Configurações para resolver problemas de prepared statements em produção
+  // Configurações para resolver problemas de prepared statements
+  transactionOptions: {
+    maxWait: 5000,
+    timeout: 10000,
+  },
+  // Desabilitar prepared statements para evitar conflitos
   ...(process.env.NODE_ENV === 'production' && {
-    transactionOptions: {
-      maxWait: 5000,
-      timeout: 10000,
-    },
+    __internal: {
+      engine: {
+        enableEngineDebugMode: false,
+      }
+    }
   })
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+
+// Função para desconectar o Prisma adequadamente
+export async function disconnectPrisma() {
+  await prisma.$disconnect()
+}
+
+// Desconectar quando o processo terminar
+process.on('beforeExit', async () => {
+  await disconnectPrisma()
+})

@@ -6,8 +6,7 @@ import { z } from 'zod'
 
 const createCategorySchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome deve ter no máximo 100 caracteres'),
-  description: z.string().optional(),
-  is_active: z.boolean().default(true)
+  description: z.string().optional()
 })
 
 // GET - Listar todas as categorias
@@ -20,14 +19,9 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const includeInactive = searchParams.get('include_inactive') === 'true'
     const search = searchParams.get('search')
 
     const where: any = {}
-    
-    if (!includeInactive) {
-      where.is_active = true
-    }
 
     if (search) {
       where.name = {
