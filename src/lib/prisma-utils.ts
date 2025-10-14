@@ -13,11 +13,17 @@ export async function executeWithRetry<T>(
     } catch (error: any) {
       lastError = error
       
-      // Verifica se é um erro de prepared statement
+      // Verifica se é um erro de prepared statement ou conexão PostgreSQL
       const isPreparedStatementError = 
         error?.message?.includes('prepared statement') ||
-        error?.code === '26000' ||
-        error?.message?.includes('does not exist')
+        error?.code === '26000' || // prepared statement does not exist
+        error?.code === '42P05' || // prepared statement already exists
+        error?.code === '22P03' || // incorrect binary data format
+        error?.code === '08P01' || // bind message supplies wrong parameters
+        error?.message?.includes('does not exist') ||
+        error?.message?.includes('already exists') ||
+        error?.message?.includes('incorrect binary data format') ||
+        error?.message?.includes('bind message supplies')
       
       if (isPreparedStatementError && attempt < maxRetries) {
         console.warn(`Tentativa ${attempt} falhou com erro de prepared statement, tentando novamente...`)
