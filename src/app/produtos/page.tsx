@@ -148,9 +148,21 @@ export default function ProductsPage() {
                 <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                   <Link href={`/produtos/${product.id}`}>
                     <div className="relative">
-                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400 text-sm">Imagem do produto</span>
-                      </div>
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-full h-48 object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <img
+                            src="/placeholder-product.svg"
+                            alt="Imagem do produto"
+                            className="w-16 h-16 text-gray-400"
+                          />
+                        </div>
+                      )}
                       {product.stock <= 5 && product.stock > 0 && (
                         <div className="absolute top-2 right-2 bg-warning text-white px-2 py-1 rounded text-xs font-medium">
                 Últimas unidades

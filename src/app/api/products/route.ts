@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
     const totalPages = Math.ceil(total / limit)
 
     return NextResponse.json({
-      products,
+      products: products.map((product: any) => ({
+        ...product,
+        images: JSON.parse(product.images)
+      })),
       pagination: {
         page,
         limit,

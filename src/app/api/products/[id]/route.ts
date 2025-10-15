@@ -21,7 +21,12 @@ export async function GET(
       )
     }
 
-    return NextResponse.json({ product })
+    return NextResponse.json({ 
+      product: {
+        ...product,
+        images: JSON.parse(product.images)
+      }
+    })
 
   } catch (error) {
     console.error('Erro ao buscar produto:', error)

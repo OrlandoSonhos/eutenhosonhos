@@ -139,19 +139,41 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8">
             {/* Product Image */}
             <div className="space-y-4">
-              <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-400 text-lg">Imagem do produto</span>
+              <div className="aspect-square bg-gray-200 rounded-lg overflow-hidden">
+                {product.images && product.images.length > 0 ? (
+                  <img
+                    src={product.images[0]}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <img
+                      src="/placeholder-product.svg"
+                      alt="Imagem do produto"
+                      className="w-24 h-24 text-gray-400"
+                    />
+                  </div>
+                )}
               </div>
               
-              {/* Thumbnail images placeholder */}
-              <div className="grid grid-cols-4 gap-2">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className="aspect-square bg-gray-100 rounded border-2 border-transparent hover:border-indigo-500 cursor-pointer"
-                  />
-                ))}
-              </div>
+              {/* Thumbnail images */}
+              {product.images && product.images.length > 1 && (
+                <div className="grid grid-cols-4 gap-2">
+                  {product.images.slice(0, 4).map((image, index) => (
+                    <div
+                      key={index}
+                      className="aspect-square bg-gray-100 rounded border-2 border-transparent hover:border-indigo-500 cursor-pointer overflow-hidden"
+                    >
+                      <img
+                        src={image}
+                        alt={`${product.title} - Imagem ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Product Info */}
