@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { trackPackage } from '@/lib/correios'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 

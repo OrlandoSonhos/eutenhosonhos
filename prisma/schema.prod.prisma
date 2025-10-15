@@ -102,6 +102,7 @@ model Order {
   discount_cents Int         @default(0)
   final_cents    Int
   status         OrderStatus @default(PENDING)
+  tracking_code  String?
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
 

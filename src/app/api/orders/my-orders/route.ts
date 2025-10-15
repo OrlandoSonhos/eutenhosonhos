@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -32,13 +32,13 @@ export async function GET(request: NextRequest) {
         user_id: user.id
       },
       include: {
-        items: {
+        order_items: {
           include: {
             product: {
               select: {
                 id: true,
                 title: true,
-                image_url: true
+                images: true
               }
             }
           }

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { getPayment } from '@/lib/mercadopago'
 import { sendOrderConfirmationEmail } from '@/lib/email'
+import { Prisma } from '@prisma/client'
 
 interface SessionWithUser {
   user: {
@@ -13,6 +14,15 @@ interface SessionWithUser {
     role: string
   }
 }
+
+type OrderWithUser = Prisma.OrderGetPayload<{
+  include: {
+    user: true
+    order_items: {
+      include: { product: true }
+    }
+  }
+}>
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,18 +93,19 @@ export async function POST(request: NextRequest) {
                 })
 
                 // Enviar e-mail de confirmação
-                if (order.user?.email) {
+                const orderWithUser = order as any
+                if (orderWithUser.user?.email) {
                   try {
-                    const items = order.order_items.map((item: any) => ({
+                    const items = orderWithUser.order_items?.map((item: any) => ({
                       name: item.product.title,
                       quantity: item.quantity,
                       priceCents: item.price_cents
-                    }))
+                    })) || []
 
                     await sendOrderConfirmationEmail({
-                      to: order.user.email,
+                      to: orderWithUser.user.email,
                       orderId: order.id,
-                      customerName: order.user.name,
+                      customerName: orderWithUser.user.name,
                       totalCents: order.total_cents,
                       items
                     })
