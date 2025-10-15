@@ -16,15 +16,7 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   transactionOptions: {
     maxWait: 5000,
     timeout: 10000,
-  },
-  // Desabilitar prepared statements para evitar conflitos
-  ...(process.env.NODE_ENV === 'production' && {
-    __internal: {
-      engine: {
-        enableEngineDebugMode: false,
-      }
-    }
-  })
+  }
 })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
