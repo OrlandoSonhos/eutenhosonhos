@@ -25,7 +25,21 @@ export async function POST(request: NextRequest) {
 
     // Buscar detalhes do pagamento no Mercado Pago
     console.log('🔍 Buscando pagamento no MP, ID:', paymentId)
-    const paymentData = await getPayment(paymentId)
+    let paymentData
+    try {
+      paymentData = await getPayment(paymentId)
+    } catch (error: any) {
+      console.log('❌ Erro ao buscar pagamento no MP:', error)
+      
+      // Se o pagamento não foi encontrado, pode ser um webhook antigo ou inválido
+      if (error?.status === 404 || error?.cause?.[0]?.code === 2000) {
+        console.log('Pagamento não encontrado - ignorando webhook')
+        return NextResponse.json({ status: 'payment_not_found', message: 'Pagamento não encontrado - webhook ignorado' })
+      }
+      
+      // Para outros erros, relançar
+      throw error
+    }
     
     if (!paymentData) {
       console.log('❌ Pagamento não encontrado no MP')
