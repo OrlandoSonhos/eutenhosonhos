@@ -251,7 +251,7 @@ export default function AdminProductsPage() {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-12 w-12">
                         <Image
-                          src={product.images[0] || '/placeholder-product.jpg'}
+                          src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-product.svg'}
                           alt={product.title}
                           width={48}
                           height={48}
@@ -327,7 +327,7 @@ export default function AdminProductsPage() {
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
                 <Image
-                  src={product.images[0] || '/placeholder-product.jpg'}
+                  src={product.images && product.images.length > 0 ? product.images[0] : '/placeholder-product.svg'}
                   alt={product.title}
                   width={64}
                   height={64}

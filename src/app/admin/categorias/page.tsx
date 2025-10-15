@@ -93,7 +93,7 @@ export default function CategoriasPage() {
     setIsDialogOpen(true)
   }
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('Tem certeza que deseja excluir esta categoria?')) {
       return
     }

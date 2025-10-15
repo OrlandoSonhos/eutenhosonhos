@@ -102,12 +102,35 @@ export async function POST(request: NextRequest) {
       coupon = couponValidation.coupon
     }
 
+    // Calcular o valor final (inicialmente igual ao total, será atualizado se houver cupom)
+    let finalCents = orderData.total
+    let discountCents = 0
+
+    // Se há cupom, calcular o desconto
+    if (coupon) {
+      if (coupon.type === 'AUCTION_50') {
+        // Para cupons de leilão, aplicar desconto apenas nos produtos válidos
+        const validItemsTotal = orderData.items
+          .filter(item => coupon.valid_products?.includes(item.id))
+          .reduce((sum, item) => sum + (item.price_cents * item.quantity), 0)
+        
+        discountCents = Math.floor(validItemsTotal * (coupon.discount_percent / 100))
+      } else {
+        // Para cupons regulares, aplicar em todo o carrinho
+        discountCents = Math.floor(orderData.total * (coupon.discount_percent / 100))
+      }
+      
+      finalCents = Math.max(0, orderData.total - discountCents)
+    }
+
     // Criar o pedido no banco de dados
     const order = await prismaWithRetry.order.create({
       data: {
         user_id: userId,
         status: 'PENDING',
         total_cents: orderData.total,
+        discount_cents: discountCents,
+        final_cents: finalCents,
         order_items: {
           create: orderData.items.map(item => ({
             product_id: item.id,
