@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
+interface SessionUser {
+  id: string;
+  role: string;
+}
+
+interface SessionWithUser {
+  user: SessionUser;
+}
+
 const createDiscountCouponSchema = z.object({
   code: z.string().min(1, 'Código é obrigatório'),
   type: z.enum(['REGULAR_25', 'AUCTION_50']),
@@ -17,9 +26,9 @@ const createDiscountCouponSchema = z.object({
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -56,9 +65,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session || !session.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 

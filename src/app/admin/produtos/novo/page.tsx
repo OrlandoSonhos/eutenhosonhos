@@ -53,7 +53,8 @@ export default function NewProductPage() {
         const response = await fetch('/api/admin/categories')
         if (response.ok) {
           const data = await response.json()
-          setCategories(data.categories || [])
+          // A API retorna o array direto, não um objeto com propriedade categories
+          setCategories(Array.isArray(data) ? data : [])
         }
       } catch (error) {
         console.error('Erro ao carregar categorias:', error)

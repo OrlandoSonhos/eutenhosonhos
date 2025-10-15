@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
+interface SessionUser {
+  id: string;
+  role: string;
+}
+
+interface SessionWithUser {
+  user: SessionUser;
+}
+
 const createCategorySchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome deve ter no máximo 100 caracteres'),
   description: z.string().optional()
@@ -12,9 +21,9 @@ const createCategorySchema = z.object({
 // GET - Listar todas as categorias
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -25,8 +34,7 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.name = {
-        contains: search,
-        mode: 'insensitive'
+        contains: search
       }
     }
 
@@ -57,9 +65,9 @@ export async function GET(request: NextRequest) {
 // POST - Criar nova categoria
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -69,10 +77,7 @@ export async function POST(request: NextRequest) {
     // Verificar se já existe uma categoria com o mesmo nome
     const existingCategory = await prismaWithRetry.category.findFirst({
       where: {
-        name: {
-          equals: validatedData.name,
-          mode: 'insensitive'
-        }
+        name: validatedData.name
       }
     })
 

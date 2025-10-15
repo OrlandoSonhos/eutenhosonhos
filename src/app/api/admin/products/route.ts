@@ -38,8 +38,8 @@ export async function GET(request: NextRequest) {
     const where = {
       ...(search && {
         OR: [
-          { title: { contains: search, mode: 'insensitive' as const } },
-          { description: { contains: search, mode: 'insensitive' as const } }
+          { title: { contains: search } },
+          { description: { contains: search } }
         ]
       }),
       ...(active !== null && active !== undefined && { active: active === 'true' }),

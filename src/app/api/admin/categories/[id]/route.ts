@@ -4,6 +4,15 @@ import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
+interface SessionUser {
+  id: string;
+  role: string;
+}
+
+interface SessionWithUser {
+  user: SessionUser;
+}
+
 interface ExistingCategory {
   id: number
   name: string
@@ -30,9 +39,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -83,9 +92,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -118,10 +127,7 @@ export async function PUT(
     if (validatedData.name && existingCategory && validatedData.name !== existingCategory.name) {
       const duplicateCategory = await prismaWithRetry.category.findFirst({
         where: {
-          name: {
-            equals: validatedData.name,
-            mode: 'insensitive'
-          },
+          name: validatedData.name,
           id: {
             not: categoryId
           }
@@ -171,9 +177,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions) as SessionWithUser | null
     
-    if (!session?.user?.id) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 

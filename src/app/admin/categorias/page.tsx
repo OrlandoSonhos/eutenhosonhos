@@ -6,10 +6,9 @@ import { useEffect, useState } from 'react'
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react'
 
 interface Category {
-  id: number
+  id: string
   name: string
   description?: string
-  is_active: boolean
   created_at: string
   _count: {
     products: number
@@ -20,13 +19,11 @@ export default function CategoriasPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showInactive, setShowInactive] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    active: true
+    description: ''
   })
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -34,7 +31,6 @@ export default function CategoriasPage() {
   const fetchCategories = async () => {
     try {
       const params = new URLSearchParams()
-      if (showInactive) params.append('include_inactive', 'true')
       if (searchTerm) params.append('search', searchTerm)
 
       const response = await fetch(`/api/admin/categories?${params}`)
@@ -53,7 +49,7 @@ export default function CategoriasPage() {
 
   useEffect(() => {
     fetchCategories()
-  }, [searchTerm, showInactive])
+  }, [searchTerm])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,7 +73,7 @@ export default function CategoriasPage() {
         console.log(editingCategory ? 'Categoria atualizada!' : 'Categoria criada!')
         setIsDialogOpen(false)
         setEditingCategory(null)
-        setFormData({ name: '', description: '', active: true })
+        setFormData({ name: '', description: '' })
         fetchCategories()
       } else {
         const error = await response.json()
@@ -92,8 +88,7 @@ export default function CategoriasPage() {
     setEditingCategory(category)
     setFormData({
       name: category.name,
-      description: category.description || '',
-      active: category.is_active
+      description: category.description || ''
     })
     setIsDialogOpen(true)
   }
@@ -122,9 +117,11 @@ export default function CategoriasPage() {
 
 
 
-  const filteredCategories = categories.filter(category =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+
+
+  const filteredCategories = categories.filter(category => {
+    return category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  })
 
   if (status === 'loading') {
     return <div className="flex justify-center items-center min-h-screen">Carregando...</div>
@@ -151,7 +148,7 @@ export default function CategoriasPage() {
             <button
               onClick={() => {
                 setEditingCategory(null)
-                setFormData({ name: '', description: '', active: true })
+                setFormData({ name: '', description: '' })
                 setIsDialogOpen(true)
               }}
               className="inline-flex items-center px-4 py-2 bg-brand-primary text-white font-semibold rounded-lg hover:bg-brand-primary-dark transition-colors"
@@ -177,6 +174,7 @@ export default function CategoriasPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
               />
             </div>
+
           </div>
         </div>
 
@@ -197,7 +195,7 @@ export default function CategoriasPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produtos</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criada em</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                   </tr>
@@ -216,13 +214,7 @@ export default function CategoriasPage() {
                           {category._count.products} produto(s)
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          category.is_active ? 'bg-success text-success' : 'bg-error text-error'
-                        }`}>
-                          {category.is_active ? 'Ativa' : 'Inativa'}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {new Date(category.created_at).toLocaleDateString('pt-BR')}
                       </td>
@@ -254,8 +246,15 @@ export default function CategoriasPage() {
 
       {/* Modal */}
       {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+        <>
+          {/* Backdrop transparente para capturar cliques */}
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => setIsDialogOpen(false)}
+          />
+          {/* Modal centralizado */}
+          <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50">
+            <div className="bg-white rounded-lg p-6 w-96 shadow-2xl border-2 border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
@@ -298,18 +297,7 @@ export default function CategoriasPage() {
                 />
               </div>
               
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="active"
-                  checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
-                  className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
-                />
-                <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
-                  Categoria ativa
-                </label>
-              </div>
+
               
               <div className="flex justify-end gap-3 pt-4">
                 <button
@@ -328,8 +316,9 @@ export default function CategoriasPage() {
                 </button>
               </div>
             </form>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )
