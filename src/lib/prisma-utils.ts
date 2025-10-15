@@ -3,7 +3,7 @@ import { prisma } from './prisma'
 // Função para executar queries com retry em caso de erro de prepared statement
 export async function executeWithRetry<T>(
   operation: () => Promise<T>,
-  maxRetries: number = 3
+  maxRetries: number = 5
 ): Promise<T> {
   let lastError: any
   
@@ -20,16 +20,24 @@ export async function executeWithRetry<T>(
         error?.code === '42P05' || // prepared statement already exists
         error?.code === '22P03' || // incorrect binary data format
         error?.code === '08P01' || // bind message supplies wrong parameters
+        error?.code === '08006' || // connection failure
+        error?.code === '57P01' || // admin shutdown
+        error?.code === '57P02' || // crash shutdown
+        error?.code === '57P03' || // cannot connect now
         error?.message?.includes('does not exist') ||
         error?.message?.includes('already exists') ||
         error?.message?.includes('incorrect binary data format') ||
-        error?.message?.includes('bind message supplies')
+        error?.message?.includes('bind message supplies') ||
+        error?.message?.includes('Connection terminated') ||
+        error?.message?.includes('Connection closed') ||
+        error?.message?.includes('server closed the connection')
       
       if (isPreparedStatementError && attempt < maxRetries) {
         console.warn(`Tentativa ${attempt} falhou com erro de prepared statement, tentando novamente...`)
         
-        // Aguarda um pouco antes de tentar novamente
-        await new Promise(resolve => setTimeout(resolve, 100 * attempt))
+        // Aguarda progressivamente mais tempo antes de tentar novamente
+        const delay = Math.min(1000, 200 * Math.pow(2, attempt - 1))
+        await new Promise(resolve => setTimeout(resolve, delay))
         continue
       }
       
