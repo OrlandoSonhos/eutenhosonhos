@@ -8,7 +8,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model User {
@@ -100,8 +99,22 @@ model Order {
   user_id        String
   total_cents    Int
   discount_cents Int         @default(0)
+  shipping_cents Int         @default(0)
   final_cents    Int
   status         OrderStatus @default(PENDING)
+  
+  // Endereço de entrega
+  shipping_cep        String?
+  shipping_address    String?
+  shipping_number     String?
+  shipping_complement String?
+  shipping_district   String?
+  shipping_city       String?
+  shipping_state      String?
+  
+  // Rastreamento
+  tracking_code String?
+  
   created_at     DateTime    @default(now())
   updated_at     DateTime    @updatedAt
 

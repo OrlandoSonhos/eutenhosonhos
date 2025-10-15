@@ -16,10 +16,25 @@ const createOrderSchema = z.object({
     stock: z.number()
   })),
   couponCode: z.string().optional(),
+  discountCouponCode: z.string().optional(),
   subtotal: z.number(),
   shipping: z.number(),
   discount: z.number(),
-  total: z.number()
+  total: z.number(),
+  shippingAddress: z.object({
+    cep: z.string(),
+    address: z.string(),
+    number: z.string(),
+    complement: z.string().optional(),
+    district: z.string(),
+    city: z.string(),
+    state: z.string()
+  }).optional(),
+  selectedShipping: z.object({
+    service: z.string(),
+    price_cents: z.number(),
+    delivery_time: z.string()
+  }).optional()
 })
 
 export async function POST(request: NextRequest) {
@@ -121,6 +136,14 @@ export async function POST(request: NextRequest) {
         total_cents: orderData.total,
         discount_cents: discountCents,
         final_cents: finalCents,
+        shipping_cents: orderData.shipping,
+        shipping_cep: orderData.shippingAddress?.cep,
+        shipping_address: orderData.shippingAddress?.address,
+        shipping_number: orderData.shippingAddress?.number,
+        shipping_complement: orderData.shippingAddress?.complement,
+        shipping_district: orderData.shippingAddress?.district,
+        shipping_city: orderData.shippingAddress?.city,
+        shipping_state: orderData.shippingAddress?.state,
         order_items: {
           create: orderData.items.map(item => ({
             product_id: item.id,

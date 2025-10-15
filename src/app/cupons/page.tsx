@@ -62,7 +62,7 @@ export default function DiscountCardsPage() {
       }
 
       // Redirecionar para o Mercado Pago
-      const checkoutUrl = data.sandboxInitPoint || data.initPoint
+      const checkoutUrl = data.initPoint || data.sandboxInitPoint
       if (checkoutUrl) {
         window.location.href = checkoutUrl
       }

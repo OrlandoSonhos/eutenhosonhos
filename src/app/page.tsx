@@ -74,14 +74,9 @@ export default function HomePage() {
                 Cartões de Desconto Pré-Pagos
               </h1>
               <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Economize até <strong>80% nas suas compras</strong> com nossos cartões de desconto pré-pagos. 
+                Economize até 50% nas suas compras com nossos cartões de desconto pré-pagos. 
                 Compre agora e use quando quiser em nossa loja online.
               </p>
-              <div className="bg-brand-accent/10 border border-brand-accent rounded-lg p-4 inline-block">
-                <p className="text-brand-accent-dark font-medium">
-                  🎯 <strong>Leilões Diários:</strong> Cupons especiais de 50% OFF em produtos selecionados!
-                </p>
-              </div>
             </header>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
@@ -158,47 +153,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Seção de Leilões */}
-        <section className="py-20 bg-brand-gradient relative overflow-hidden">
-          <div className="absolute inset-0 bg-black/5"></div>
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8">
-              🎯 Leilões Diários Especiais
-            </h2>
-            <p className="text-xl mb-12 max-w-3xl mx-auto leading-relaxed">
-              Participe dos nossos leilões diários e ganhe cupons de <strong>50% de desconto</strong> 
-              em produtos selecionados. Ofertas por tempo limitado!
-            </p>
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-8 max-w-lg mx-auto mb-12 shadow-xl">
-              <h3 className="text-2xl font-bold mb-6">Como Funciona:</h3>
-              <ul className="text-left space-y-3 text-lg">
-                <li className="flex items-center">
-                  <span className="text-brand-accent mr-3">✅</span>
-                  Produtos marcados como "Leilão"
-                </li>
-                <li className="flex items-center">
-                  <span className="text-brand-accent mr-3">✅</span>
-                  Cupom válido apenas na data do leilão
-                </li>
-                <li className="flex items-center">
-                  <span className="text-brand-accent mr-3">✅</span>
-                  Desconto de 50% aplicado automaticamente
-                </li>
-                <li className="flex items-center">
-                  <span className="text-brand-accent mr-3">✅</span>
-                  Estoque limitado por dia
-                </li>
-              </ul>
-            </div>
-            <Link
-              href="/leiloes"
-              className="inline-flex items-center px-8 py-4 bg-white text-brand-primary font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-              aria-label="Ver leilões ativos hoje"
-            >
-              Ver Leilões de Hoje
-            </Link>
-          </div>
-        </section>
+
 
         {/* FAQ Section para SEO */}
         <section className="py-20 bg-white">

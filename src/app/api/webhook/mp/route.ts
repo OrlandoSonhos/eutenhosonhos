@@ -7,7 +7,11 @@ import { sendOrderConfirmationEmail } from '@/lib/email'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('Webhook MP recebido:', body)
+    console.log('🔔 WEBHOOK MP RECEBIDO:', new Date().toISOString(), body)
+    
+    // Log headers para debug
+    const headers = Object.fromEntries(request.headers.entries())
+    console.log('📋 Headers do webhook:', headers)
 
     // Verificar se é uma notificação de pagamento
     if (body.type !== 'payment') {
@@ -20,13 +24,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Buscar detalhes do pagamento no Mercado Pago
+    console.log('🔍 Buscando pagamento no MP, ID:', paymentId)
     const paymentData = await getPayment(paymentId)
     
     if (!paymentData) {
+      console.log('❌ Pagamento não encontrado no MP')
       return NextResponse.json({ error: 'Pagamento não encontrado' }, { status: 404 })
     }
 
-    console.log('Dados do pagamento:', paymentData)
+    console.log('💰 Dados do pagamento:', {
+      id: paymentData.id,
+      status: paymentData.status,
+      external_reference: paymentData.external_reference,
+      transaction_amount: paymentData.transaction_amount,
+      payment_method_id: paymentData.payment_method_id
+    })
 
     // Verificar se o pagamento foi aprovado
     if (paymentData.status !== 'approved') {

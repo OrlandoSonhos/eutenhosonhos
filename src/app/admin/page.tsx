@@ -11,7 +11,8 @@ import {
   DollarSign,
   Calendar,
   BarChart3,
-  PieChart
+  PieChart,
+  RefreshCw
 } from 'lucide-react'
 
 interface DashboardStats {
@@ -31,6 +32,7 @@ export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -57,6 +59,29 @@ export default function AdminDashboard() {
       console.error('Erro ao carregar estatísticas:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const syncOrders = async () => {
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/admin/sync-orders', {
+        method: 'POST'
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Sincronização concluída: ${data.results.updated} pedidos atualizados`)
+        // Recarregar estatísticas
+        await fetchDashboardStats()
+      } else {
+        alert('Erro na sincronização: ' + data.error)
+      }
+    } catch (error) {
+      console.error('Erro ao sincronizar pedidos:', error)
+      alert('Erro ao sincronizar pedidos')
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -264,7 +289,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <div className="mt-6 sm:mt-8 bg-white rounded-lg shadow p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Ações Rápidas</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             <button 
               onClick={() => router.push('/admin/products')}
               className="flex items-center justify-center p-3 sm:p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
@@ -292,6 +317,14 @@ export default function AdminDashboard() {
             >
               <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
               <span className="truncate">Ver Relatórios</span>
+            </button>
+            <button 
+              onClick={syncOrders}
+              disabled={syncing}
+              className="flex items-center justify-center p-3 sm:p-4 border border-green-300 bg-green-50 rounded-lg hover:bg-green-100 transition-colors text-sm sm:text-base disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 sm:h-5 sm:w-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              <span className="truncate">{syncing ? 'Sincronizando...' : 'Sincronizar Pedidos'}</span>
             </button>
           </div>
         </div>

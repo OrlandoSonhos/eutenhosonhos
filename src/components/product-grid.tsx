@@ -73,7 +73,7 @@ export function ProductGrid() {
                     onError={(e) => {
                       // Fallback para imagem padrão se a imagem não carregar
                       const target = e.target as HTMLImageElement
-                      target.src = '/placeholder-product.jpg'
+                      target.src = '/placeholder-product.svg'
                     }}
                   />
                 ) : (
