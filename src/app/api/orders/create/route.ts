@@ -106,20 +106,10 @@ export async function POST(request: NextRequest) {
     let finalCents = orderData.total
     let discountCents = 0
 
-    // Se há cupom, calcular o desconto
+    // Se há cupom de valor, aplicar o desconto
     if (coupon) {
-      if (coupon.type === 'AUCTION_50') {
-        // Para cupons de leilão, aplicar desconto apenas nos produtos válidos
-        const validItemsTotal = orderData.items
-          .filter(item => coupon.valid_products?.includes(item.id))
-          .reduce((sum, item) => sum + (item.price_cents * item.quantity), 0)
-        
-        discountCents = Math.floor(validItemsTotal * (coupon.discount_percent / 100))
-      } else {
-        // Para cupons regulares, aplicar em todo o carrinho
-        discountCents = Math.floor(orderData.total * (coupon.discount_percent / 100))
-      }
-      
+      // Para cupons de valor, o desconto é o valor facial do cupom
+      discountCents = coupon.face_value_cents
       finalCents = Math.max(0, orderData.total - discountCents)
     }
 
