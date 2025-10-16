@@ -11,9 +11,8 @@ try {
   console.log('⚙️ Gerando cliente Prisma...');
   execSync('prisma generate', { stdio: 'inherit' });
 
-  // 3. Aplicar schema no banco
-  console.log('🗄️ Aplicando schema no banco...');
-  execSync('prisma db push', { stdio: 'inherit' });
+  // 3. Schema já aplicado via migrations ou manualmente
+  console.log('ℹ️ Schema deve estar aplicado no banco de produção');
 
   console.log('✅ Setup da Vercel concluído com sucesso!');
   console.log('ℹ️ Para popular o banco, execute: npm run db:seed após o deploy');
