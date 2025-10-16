@@ -2,6 +2,8 @@
 
 Uma plataforma completa de e-commerce com sistema de cupons pré-pagos, desenvolvida com Next.js 15, Prisma e Mercado Pago.
 
+> **Última atualização:** Correções de banco de dados e webhook do Mercado Pago aplicadas (Dezembro 2024)
+
 ## 🚀 Funcionalidades
 
 ### 🛒 **E-commerce Completo**
