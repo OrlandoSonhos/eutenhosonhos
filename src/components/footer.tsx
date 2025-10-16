@@ -54,7 +54,7 @@ export default function Footer() {
                 <Facebook size={20} />
               </a>
               <a 
-                href="https://instagram.com" 
+                href="https://www.instagram.com/sonhoseutenho?utm_source=qr&igsh=NW1memZqemJzYmh2" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-600 hover:text-brand-accent transition-colors"

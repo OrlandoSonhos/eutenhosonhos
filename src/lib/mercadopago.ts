@@ -100,7 +100,9 @@ export function createOrderPreference(
     price_cents: number
   }>,
   userEmail?: string,
-  orderId?: string
+  orderId?: string,
+  shippingCents?: number,
+  shippingService?: string
 ) {
   const mpItems = items.map(item => ({
     id: item.id,
@@ -109,6 +111,17 @@ export function createOrderPreference(
     unit_price: item.price_cents / 100, // Converter centavos para reais
     description: item.title
   }))
+
+  // Adicionar frete como item separado se houver
+  if (shippingCents && shippingCents > 0) {
+    mpItems.push({
+      id: 'shipping',
+      title: `Frete - ${shippingService || 'Entrega'}`,
+      quantity: 1,
+      unit_price: shippingCents / 100, // Converter centavos para reais
+      description: `Taxa de entrega - ${shippingService || 'Entrega'}`
+    })
+  }
 
   return createPreference({
     items: mpItems,

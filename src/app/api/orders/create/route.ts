@@ -170,7 +170,9 @@ export async function POST(request: NextRequest) {
         price_cents: item.price_cents
       })),
       (session as any).user.email,
-      order.id
+      order.id,
+      orderData.selectedShipping?.price_cents || orderData.shipping,
+      orderData.selectedShipping?.service || 'Entrega'
     )
 
     // Aplicar cupom se fornecido
