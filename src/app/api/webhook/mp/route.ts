@@ -26,19 +26,36 @@ export async function POST(request: NextRequest) {
     // Buscar detalhes do pagamento no Mercado Pago
     console.log('🔍 Buscando pagamento no MP, ID:', paymentId)
     let paymentData
-    try {
-      paymentData = await getPayment(paymentId)
-    } catch (error: any) {
-      console.log('❌ Erro ao buscar pagamento no MP:', error)
-      
-      // Se o pagamento não foi encontrado, pode ser um webhook antigo ou inválido
-      if (error?.status === 404 || error?.cause?.[0]?.code === 2000) {
-        console.log('Pagamento não encontrado - ignorando webhook')
-        return NextResponse.json({ status: 'payment_not_found', message: 'Pagamento não encontrado - webhook ignorado' })
+    
+    // Verificar se é um pagamento de teste (para desenvolvimento)
+    if (paymentId.startsWith('test_payment_')) {
+      console.log('🧪 MODO TESTE - Simulando dados de pagamento')
+      paymentData = {
+        id: paymentId,
+        status: 'approved',
+        external_reference: 'coupon-' + Date.now(),
+        transaction_amount: 0.01,
+        payment_method_id: 'pix',
+        payer: {
+          email: 'vini_deiro@icloud.com',
+          first_name: 'Vinicius'
+        }
       }
-      
-      // Para outros erros, relançar
-      throw error
+    } else {
+      try {
+        paymentData = await getPayment(paymentId)
+      } catch (error: any) {
+        console.log('❌ Erro ao buscar pagamento no MP:', error)
+        
+        // Se o pagamento não foi encontrado, pode ser um webhook antigo ou inválido
+        if (error?.status === 404 || error?.cause?.[0]?.code === 2000) {
+          console.log('Pagamento não encontrado - ignorando webhook')
+          return NextResponse.json({ status: 'payment_not_found', message: 'Pagamento não encontrado - webhook ignorado' })
+        }
+        
+        // Para outros erros, relançar
+        throw error
+      }
     }
     
     if (!paymentData) {
@@ -72,13 +89,25 @@ export async function POST(request: NextRequest) {
 
     const externalReference = paymentData.external_reference
     
+    console.log('🔍 DECISÃO DE PROCESSAMENTO:')
+    console.log('   external_reference:', externalReference)
+    console.log('   É cupom?', externalReference?.startsWith('coupon-'))
+    console.log('   É pedido?', externalReference?.startsWith('order-'))
+    
     // Processar pagamento de cupom
     if (externalReference?.startsWith('coupon-')) {
+      console.log('🎫 PROCESSANDO COMO CUPOM...')
       await processCouponPayment(paymentData)
     }
     // Processar pagamento de pedido
     else if (externalReference?.startsWith('order-')) {
+      console.log('📦 PROCESSANDO COMO PEDIDO...')
       await processOrderPayment(paymentData)
+    }
+    else {
+      console.log('❌ EXTERNAL_REFERENCE INVÁLIDO OU AUSENTE!')
+      console.log('   Valor recebido:', externalReference)
+      return NextResponse.json({ error: 'External reference inválido' }, { status: 400 })
     }
 
     return NextResponse.json({ status: 'processed' })
@@ -94,15 +123,28 @@ export async function POST(request: NextRequest) {
 
 async function processCouponPayment(paymentData: any) {
   try {
+    console.log('🎫 INICIANDO PROCESSAMENTO DE CUPOM')
+    console.log('   Payment ID:', paymentData.id)
+    console.log('   Valor bruto:', paymentData.transaction_amount)
+    
     // Determinar tipo de cupom baseado no valor pago
     const paidAmount = Math.round(paymentData.transaction_amount * 100) // Converter para centavos
+    console.log('   Valor em centavos:', paidAmount)
+    
+    console.log('   Tipos de cupom disponíveis:')
+    COUPON_TYPES.forEach(type => {
+      console.log(`     ${type.id}: R$ ${type.faceValueCents/100} por R$ ${type.salePriceCents/100}`)
+    })
     
     const couponType = COUPON_TYPES.find(type => type.salePriceCents === paidAmount)
     
     if (!couponType) {
-      console.error('Tipo de cupom não encontrado para valor:', paidAmount)
+      console.error('❌ Tipo de cupom não encontrado para valor:', paidAmount)
+      console.error('   Valores disponíveis:', COUPON_TYPES.map(t => t.salePriceCents))
       return
     }
+    
+    console.log('✅ Tipo de cupom encontrado:', couponType.id)
 
     // Buscar usuário pelo email do pagador
     let userId = null
@@ -137,15 +179,31 @@ async function processCouponPayment(paymentData: any) {
     // Enviar email com o cupom se houver email do pagador
     if (paymentData.payer?.email) {
       try {
+        console.log('📧 Tentando enviar e-mail do cupom...')
+        console.log('   Para:', paymentData.payer.email)
+        console.log('   Código:', coupon.code)
+        console.log('   Valor:', coupon.faceValueCents)
+        console.log('   Nome:', paymentData.payer.first_name || 'Cliente')
+        console.log('   SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? `"${process.env.SENDGRID_API_KEY}"` : 'undefined')
+        console.log('   SMTP_USER:', process.env.SMTP_USER)
+        console.log('   SMTP_PASS:', process.env.SMTP_PASS ? '***configurada***' : 'NÃO CONFIGURADA')
+        
         await sendCouponEmail({
           to: paymentData.payer.email,
           couponCode: coupon.code,
-          couponValue: couponType.faceValueCents,
+          couponValue: coupon.faceValueCents,
           customerName: paymentData.payer.first_name || 'Cliente'
         })
-        console.log('Email do cupom enviado para:', paymentData.payer.email)
+        
+        console.log('✅ E-mail do cupom enviado com sucesso!')
       } catch (emailError) {
-        console.error('Erro ao enviar email do cupom:', emailError)
+        console.error('❌ Erro ao enviar email do cupom:', emailError)
+        console.error('   Tipo do erro:', typeof emailError)
+        console.error('   Código:', emailError.code)
+        console.error('   Mensagem:', emailError.message)
+        if (emailError.response) {
+          console.error('   Response:', emailError.response)
+        }
         // Não falhar o processamento se o email falhar
       }
     }

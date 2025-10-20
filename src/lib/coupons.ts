@@ -147,6 +147,13 @@ export async function expireOldCoupons() {
 // Tipos de cupons pré-definidos
 export const COUPON_TYPES = [
   {
+    id: 'cupom001',
+    name: 'Cupom R$ 0,01',
+    faceValueCents: 1,
+    salePriceCents: 1,
+    description: 'Cupom de teste de R$ 0,01 por apenas R$ 0,01'
+  },
+  {
     id: 'cupom25',
     name: 'Cupom R$ 25',
     faceValueCents: 2500,
