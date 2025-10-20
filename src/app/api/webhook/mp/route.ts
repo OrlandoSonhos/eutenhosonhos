@@ -199,10 +199,19 @@ async function processCouponPayment(paymentData: any) {
       } catch (emailError) {
         console.error('❌ Erro ao enviar email do cupom:', emailError)
         console.error('   Tipo do erro:', typeof emailError)
-        console.error('   Código:', emailError.code)
-        console.error('   Mensagem:', emailError.message)
-        if (emailError.response) {
-          console.error('   Response:', emailError.response)
+        
+        // Type checking para acessar propriedades do erro
+        if (emailError && typeof emailError === 'object') {
+          const error = emailError as any
+          if ('code' in error) {
+            console.error('   Código:', error.code)
+          }
+          if ('message' in error) {
+            console.error('   Mensagem:', error.message)
+          }
+          if ('response' in error) {
+            console.error('   Response:', error.response)
+          }
         }
         // Não falhar o processamento se o email falhar
       }
@@ -271,7 +280,22 @@ async function processOrderPayment(paymentData: any) {
 
         console.log('E-mail de confirmação enviado para:', order.user.email)
       } catch (emailError) {
-        console.error('Erro ao enviar e-mail de confirmação:', emailError)
+        console.error('❌ Erro ao enviar e-mail de confirmação:', emailError)
+        console.error('   Tipo do erro:', typeof emailError)
+        
+        // Type checking para acessar propriedades do erro
+        if (emailError && typeof emailError === 'object') {
+          const error = emailError as any
+          if ('code' in error) {
+            console.error('   Código:', error.code)
+          }
+          if ('message' in error) {
+            console.error('   Mensagem:', error.message)
+          }
+          if ('response' in error) {
+            console.error('   Response:', error.response)
+          }
+        }
         // Não falhar o webhook por causa do e-mail
       }
     }
