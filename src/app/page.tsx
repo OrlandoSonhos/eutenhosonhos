@@ -7,7 +7,7 @@ import { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Eu tenho Sonhos - Cartões de Desconto e Leilões Diários | Economize até 80%",
   description: "Compre cartões de desconto pré-pagos com até 80% de economia. Participe de leilões diários com cupons especiais de 50% off. Produtos exclusivos e ofertas imperdíveis.",
-  keywords: "cartões de desconto, cupons de desconto, leilão diário, ofertas especiais, economia, compras online, desconto 80%, cupom 50%",
+  keywords: "cartões pré-pagos, cartões de desconto, leilão diário, ofertas especiais, economia, compras online, desconto 80%, cupom 50%",
   openGraph: {
     title: "Cartões de Desconto e Leilões | Eu tenho Sonhos",
     description: "Economize até 80% com cartões pré-pagos e participe de leilões com cupons de 50% off",
@@ -176,7 +176,7 @@ export default function HomePage() {
                   O que são os leilões diários?
                 </summary>
                 <p className="mt-6 text-gray-600 text-lg leading-relaxed">
-                  São produtos especiais com cupons de 50% de desconto, disponíveis apenas em datas específicas. 
+                  São produtos especiais com cartões pré-pagos de 50% de desconto, disponíveis apenas em datas específicas. 
                   Cada produto tem sua data de leilão programada.
                 </p>
               </details>

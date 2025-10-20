@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Facebook, Instagram, Twitter } from 'lucide-react'
+import { Facebook, Instagram } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -29,15 +29,9 @@ export default function Footer() {
         <a href="/cupons" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
           Cupons
         </a>
-        <a href="/sobre" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
-          Sobre
-        </a>
         <a href="/contato" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
           Contato
         </a>
-        <a href="/ajuda" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
-              Ajuda
-            </a>
           </div>
 
           {/* Redes Sociais e Copyright */}
@@ -61,15 +55,6 @@ export default function Footer() {
                 aria-label="Instagram"
               >
                 <Instagram size={20} />
-              </a>
-              <a 
-                href="https://twitter.com" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-brand-primary transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter size={20} />
               </a>
             </div>
             

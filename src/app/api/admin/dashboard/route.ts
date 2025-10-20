@@ -38,7 +38,7 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions) as SessionWithUser | null
 
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || (session as any).user.role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }

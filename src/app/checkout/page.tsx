@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, CreditCard, Gift, Check, X, AlertCircle, Truck, Shield, MapPin } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-import CartDiscountCouponForm from '@/components/CartDiscountCouponForm'
 
 interface CartItem {
   id: string
@@ -46,7 +45,6 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
-  const [appliedDiscountCoupon, setAppliedDiscountCoupon] = useState<AppliedCoupon | null>(null)
   const [processingPayment, setProcessingPayment] = useState(false)
   const [cep, setCep] = useState('')
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
@@ -130,7 +128,6 @@ export default function CheckoutPage() {
   const getDiscount = () => {
     let totalDiscount = 0
     if (appliedCoupon) totalDiscount += appliedCoupon.discount
-    if (appliedDiscountCoupon) totalDiscount += appliedDiscountCoupon.discount
     return totalDiscount
   }
 
@@ -138,18 +135,7 @@ export default function CheckoutPage() {
     return Math.max(0, getSubtotal() + getShipping() - getDiscount())
   }
 
-  const handleDiscountCouponApplied = (couponData: any) => {
-    setAppliedDiscountCoupon({
-      code: couponData.code,
-      discount: couponData.discountAmount,
-      type: couponData.type,
-      discountPercent: couponData.discountPercent
-    })
-  }
 
-  const handleDiscountCouponRemoved = () => {
-    setAppliedDiscountCoupon(null)
-  }
 
   const formatCEP = (value: string) => {
     const numbers = value.replace(/\D/g, '')
@@ -255,7 +241,6 @@ export default function CheckoutPage() {
       const orderData = {
         items: cartItems,
         couponCode: appliedCoupon?.code,
-        discountCouponCode: appliedDiscountCoupon?.code,
         subtotal: getSubtotal(),
         shipping: getShipping(),
         discount: getDiscount(),
@@ -477,15 +462,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* Discount Coupon Section */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <CartDiscountCouponForm
-                cartItems={cartItems}
-                onCouponApplied={handleDiscountCouponApplied}
-                onCouponRemoved={handleDiscountCouponRemoved}
-                appliedCoupon={appliedDiscountCoupon}
-              />
-            </div>
+
 
             {/* Regular Coupon Section */}
             {appliedCoupon && (
@@ -543,12 +520,7 @@ export default function CheckoutPage() {
                   </span>
                 </div>
 
-                {appliedDiscountCoupon && (
-                  <div className="flex justify-between text-success">
-                    <span>Cupom de Desconto ({appliedDiscountCoupon.code})</span>
-                    <span className="font-medium">-{formatCurrency(appliedDiscountCoupon.discount)}</span>
-                  </div>
-                )}
+
 
                 {appliedCoupon && (
                   <div className="flex justify-between text-success">

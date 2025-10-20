@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, ShoppingCart } from 'lucide-react'
+import { Search, ShoppingCart, Filter, X } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface Product {
@@ -28,10 +28,23 @@ interface ProductsResponse {
   }
 }
 
+interface Category {
+  id: string
+  name: string
+  description: string
+  _count?: {
+    products: number
+  }
+}
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     totalPages: 1,
@@ -39,13 +52,27 @@ export default function ProductsPage() {
     hasPrev: false
   })
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true)
+      const response = await fetch('/api/categories?includeCount=true')
+      const data = await response.json()
+      setCategories(data.categories || [])
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error)
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }, [])
+
   const fetchProducts = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: '12',
-        ...(search && { search })
+        ...(search && { search }),
+        ...(selectedCategory && { category: selectedCategory })
       })
 
       const response = await fetch(`/api/products?${params}`)
@@ -63,7 +90,11 @@ export default function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, pagination.page])
+  }, [search, selectedCategory, pagination.page])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
 
   useEffect(() => {
     fetchProducts()
@@ -73,6 +104,18 @@ export default function ProductsPage() {
     e.preventDefault()
     setPagination(prev => ({ ...prev, page: 1 }))
     fetchProducts()
+  }
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+    setPagination(prev => ({ ...prev, page: 1 }))
+    setSidebarOpen(false) // Fechar sidebar no mobile após seleção
+  }
+
+  const clearFilters = () => {
+    setSelectedCategory('')
+    setSearch('')
+    setPagination(prev => ({ ...prev, page: 1 }))
   }
 
   const handlePageChange = (newPage: number) => {
@@ -93,27 +136,172 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Mobile Filter Button */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Buscar produtos..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
-              />
-            </div>
+          <div className="flex flex-col lg:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Buscar produtos..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+              >
+                Buscar
+              </button>
+            </form>
+            
+            {/* Mobile Filter Button */}
             <button
-              type="submit"
-              className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
             >
-              Buscar
+              <Filter className="w-5 h-5 mr-2" />
+              Filtros
             </button>
-          </form>
+            
+            {/* Clear Filters Button */}
+            {(selectedCategory || search) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+          
+          {/* Active Filters */}
+          {selectedCategory && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-brand-primary text-white">
+                {categories.find(cat => cat.id === selectedCategory)?.name}
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className="ml-2 hover:bg-brand-primary-dark rounded-full p-0.5"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            </div>
+          )}
         </div>
+
+        <div className="flex gap-8">
+          {/* Sidebar - Desktop */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Categorias</h3>
+              
+              {categoriesLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleCategoryChange('')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                      !selectedCategory 
+                        ? 'bg-brand-primary text-white' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    Todas as categorias
+                  </button>
+                  
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryChange(category.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex justify-between items-center ${
+                        selectedCategory === category.id 
+                          ? 'bg-brand-primary text-white' 
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      <span>{category.name}</span>
+                      {category._count && (
+                        <span className="text-sm opacity-75">
+                          {category._count.products}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div className="lg:hidden fixed inset-0 z-50 flex">
+              <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}></div>
+              <div className="relative bg-white w-80 max-w-sm p-6 overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Categorias</h3>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {categoriesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleCategoryChange('')}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        !selectedCategory 
+                          ? 'bg-brand-primary text-white' 
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      Todas as categorias
+                    </button>
+                    
+                    {categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryChange(category.id)}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex justify-between items-center ${
+                          selectedCategory === category.id 
+                            ? 'bg-brand-primary text-white' 
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <span>{category.name}</span>
+                        {category._count && (
+                          <span className="text-sm opacity-75">
+                            {category._count.products}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className="flex-1">
 
         {/* Products Grid */}
         {loading ? (
@@ -246,6 +434,8 @@ export default function ProductsPage() {
             )}
           </>
         )}
+          </div>
+        </div>
       </div>
     </div>
   )

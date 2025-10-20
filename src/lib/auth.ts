@@ -1,9 +1,14 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import { prismaWithRetry } from './prisma-utils'
 import bcrypt from 'bcryptjs'
 
 export const authOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -52,10 +57,47 @@ export const authOptions = {
     strategy: 'jwt' as const
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user: any }) {
+    async signIn({ user, account, profile }: any) {
+      if (account?.provider === 'google') {
+        try {
+          // Verificar se o usuário já existe
+          const existingUser = await prismaWithRetry.user.findUnique({
+            where: { email: user.email }
+          })
+
+          if (!existingUser) {
+            // Criar novo usuário do Google
+            await prismaWithRetry.user.create({
+              data: {
+                email: user.email,
+                name: user.name,
+                role: 'USER'
+              }
+            })
+          }
+          return true
+        } catch (error) {
+          console.error('Erro ao criar usuário do Google:', error)
+          return false
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account }: { token: any; user: any; account: any }) {
       if (user) {
-        token.id = user.id
-        token.role = user.role
+        // Para usuários do Google, buscar dados do banco
+        if (account?.provider === 'google') {
+          const dbUser = await prismaWithRetry.user.findUnique({
+            where: { email: user.email }
+          })
+          if (dbUser) {
+            token.id = dbUser.id
+            token.role = dbUser.role
+          }
+        } else {
+          token.id = user.id
+          token.role = user.role
+        }
       }
       return token
     },

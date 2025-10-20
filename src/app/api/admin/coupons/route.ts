@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { code, face_value_cents, quantity } = await request.json()
+    const { code, face_value_cents, sale_price_cents, quantity, image_url } = await request.json()
 
     if (!code || !face_value_cents || !quantity) {
       return NextResponse.json(
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         data: {
           code: uniqueCode,
           face_value_cents: parseInt(face_value_cents),
-          sale_price_cents: parseInt(face_value_cents), // Mesmo valor por padrão
+          sale_price_cents: parseInt(sale_price_cents || face_value_cents), // Usar sale_price_cents ou face_value_cents como padrão
           expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 dias
           status: 'AVAILABLE'
         }

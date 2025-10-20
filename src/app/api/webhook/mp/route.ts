@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayment } from '@/lib/mercadopago'
 import { createCoupon, COUPON_TYPES } from '@/lib/coupons'
 import { prismaWithRetry } from '@/lib/prisma-utils'
-import { sendOrderConfirmationEmail } from '@/lib/email'
+import { sendOrderConfirmationEmail, sendCouponEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -133,6 +133,22 @@ async function processCouponPayment(paymentData: any) {
     })
 
     console.log('Cupom criado com sucesso:', coupon.code)
+
+    // Enviar email com o cupom se houver email do pagador
+    if (paymentData.payer?.email) {
+      try {
+        await sendCouponEmail({
+          to: paymentData.payer.email,
+          couponCode: coupon.code,
+          couponValue: couponType.faceValueCents,
+          customerName: paymentData.payer.first_name || 'Cliente'
+        })
+        console.log('Email do cupom enviado para:', paymentData.payer.email)
+      } catch (emailError) {
+        console.error('Erro ao enviar email do cupom:', emailError)
+        // Não falhar o processamento se o email falhar
+      }
+    }
 
   } catch (error) {
     console.error('Erro ao processar pagamento de cupom:', error)

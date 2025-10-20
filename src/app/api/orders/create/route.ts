@@ -16,7 +16,6 @@ const createOrderSchema = z.object({
     stock: z.number()
   })),
   couponCode: z.string().optional(),
-  discountCouponCode: z.string().optional(),
   subtotal: z.number(),
   shipping: z.number(),
   discount: z.number(),

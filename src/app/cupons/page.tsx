@@ -12,6 +12,7 @@ interface CouponType {
   faceValueCents: number
   salePriceCents: number
   description: string
+  image_url?: string
 }
 
 export default function DiscountCardsPage() {
@@ -132,17 +133,39 @@ export default function DiscountCardsPage() {
                 key={coupon.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] p-6 text-white text-center">
-                  <div className="text-3xl font-bold mb-2">
-                    {formatCurrency(coupon.faceValueCents)}
+                {coupon.image_url ? (
+                  <div className="relative h-48 bg-gray-100">
+                    <img 
+                      src={coupon.image_url} 
+                      alt={coupon.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                    <div className="absolute bottom-4 left-4 right-4 text-white text-center">
+                      <div className="text-3xl font-bold mb-2">
+                        {formatCurrency(coupon.faceValueCents)}
+                      </div>
+                      <div className="text-sm opacity-90 mb-2">
+                        por apenas {formatCurrency(coupon.salePriceCents)}
+                      </div>
+                      <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium inline-block">
+                        {discount}% OFF
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm opacity-90 mb-4">
-                    por apenas {formatCurrency(coupon.salePriceCents)}
+                ) : (
+                  <div className="bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] p-6 text-white text-center">
+                    <div className="text-3xl font-bold mb-2">
+                      {formatCurrency(coupon.faceValueCents)}
+                    </div>
+                    <div className="text-sm opacity-90 mb-4">
+                      por apenas {formatCurrency(coupon.salePriceCents)}
+                    </div>
+                    <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium inline-block">
+                      {discount}% OFF
+                    </div>
                   </div>
-                  <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium inline-block">
-                    {discount}% OFF
-                  </div>
-                </div>
+                )}
                 
                 <div className="p-6">
                   <p className="text-gray-600 text-sm mb-6">
