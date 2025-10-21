@@ -80,7 +80,8 @@ export function createCouponPreference(
   faceValue: number,
   salePrice: number,
   couponType: string,
-  userEmail?: string
+  userEmail?: string,
+  userId?: string
 ) {
   return createPreference({
     items: [
@@ -93,7 +94,7 @@ export function createCouponPreference(
       }
     ],
     payer: userEmail ? { email: userEmail } : undefined,
-    external_reference: `coupon-${Date.now()}`,
+    external_reference: `coupon-${Date.now()}${userId ? `-user-${userId}` : ''}`,
     notification_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/webhook/mp`,
     back_urls: {
       success: `${process.env.APP_URL || 'http://localhost:3000'}/cupons/sucesso`,

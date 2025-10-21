@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
       couponType.faceValueCents,
       couponType.salePriceCents,
       couponTypeId,
-      (session as any).user.email
+      (session as any).user.email,
+      (session as any).user.id
     )
 
     return NextResponse.json({

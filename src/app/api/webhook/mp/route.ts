@@ -232,35 +232,38 @@ async function processCouponPayment(paymentData: any) {
     
     console.log('✅ Tipo de cupom encontrado:', couponType.id)
 
-    // Buscar APENAS usuário logado (sessão ativa)
+    // Extrair ID do usuário do external_reference
     let userId = null
     let userEmail = null
     let userName = 'Cliente'
 
-    console.log('🔍 Buscando usuário logado (sessão ativa)...')
-    const activeSession = await prisma.session.findFirst({
-      where: {
-        expires: {
-          gt: new Date()
-        }
-      },
-      orderBy: {
-        expires: 'desc'
-      },
-      include: {
-        user: true
+    console.log('🔍 Extraindo ID do usuário do external_reference...')
+    const externalReference = paymentData.external_reference
+    console.log('   external_reference:', externalReference)
+    
+    // Formato esperado: coupon-1234567890-user-userId
+    const userIdMatch = externalReference?.match(/-user-(.+)$/)
+    if (userIdMatch) {
+      const extractedUserId = userIdMatch[1]
+      console.log('✅ ID do usuário extraído:', extractedUserId)
+      
+      // Buscar dados do usuário
+      const user = await prisma.user.findUnique({
+        where: { id: extractedUserId }
+      })
+      
+      if (user) {
+        userId = user.id
+        userEmail = user.email
+        userName = user.name || 'Cliente'
+        console.log('✅ Usuário encontrado:', userEmail)
+      } else {
+        console.log('❌ Usuário não encontrado no banco de dados')
       }
-    })
-
-    if (activeSession?.user) {
-      userId = activeSession.user.id
-      userEmail = activeSession.user.email
-      userName = activeSession.user.name || 'Cliente'
-      console.log('✅ Usuário logado encontrado:', userEmail)
     } else {
-      console.log('❌ Nenhum usuário logado encontrado')
+      console.log('❌ ID do usuário não encontrado no external_reference')
       console.log('   O cupom será criado mas não será enviado por e-mail')
-      console.log('   Para receber cupons por e-mail, o usuário deve estar logado')
+      console.log('   Para receber cupons por e-mail, faça login antes da compra')
     }
 
     console.log('👤 Usuário final:', { userId, userEmail, userName })
