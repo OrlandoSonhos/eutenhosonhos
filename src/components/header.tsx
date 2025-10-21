@@ -101,54 +101,11 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            {/* Dropdown de Produtos/Categorias */}
-            <div className="relative categories-dropdown">
-              <button
-                onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-brand-primary transition-colors"
-              >
-                <span>Produtos</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isCategoriesOpen ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {isCategoriesOpen && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-lg border z-50">
-                  <div className="py-2">
-                    <Link
-                      href="/produtos"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-primary"
-                      onClick={() => setIsCategoriesOpen(false)}
-                    >
-                      Todos os produtos
-                    </Link>
-                    {categories.length > 0 && (
-                      <div className="border-t border-gray-100 my-1"></div>
-                    )}
-                    {categories.map((category) => (
-                      <Link
-                        key={category.id}
-                        href={`/produtos/categoria/${category.id}`}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-primary"
-                        onClick={() => setIsCategoriesOpen(false)}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span>{category.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {category._count.products} produtos
-                          </span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <Link href="/cupons" className="text-gray-700 hover:text-[var(--primary-teal)] transition-colors">
-              Cartões
+            <Link href="/cupons" className="text-gray-700 hover:text-brand-primary transition-colors">
+              Cupons
             </Link>
             
-            <Link href="/meus-cupons" className="text-gray-700 hover:text-[var(--primary-teal)] transition-colors">
+            <Link href="/meus-cupons" className="text-gray-700 hover:text-brand-primary transition-colors">
               Meus Cartões
             </Link>
             
@@ -246,31 +203,24 @@ export function Header() {
           <div className="md:hidden py-4 border-t">
             <nav className="flex flex-col space-y-2">
               <Link
-                href="/produtos"
+                href="/cupons"
                 className="text-gray-700 hover:text-brand-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Produtos
-              </Link>
-              <Link
-                href="/cupons"
-                className="text-gray-700 hover:text-[var(--primary-teal)] transition-colors py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Cartões
+                Cupons
               </Link>
               {session && (
                 <>
                   <Link
                     href="/meus-cupons"
-                    className="text-gray-700 hover:text-[var(--primary-teal)] transition-colors py-2"
+                    className="text-gray-700 hover:text-brand-primary transition-colors py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Meus Cartões
                   </Link>
                   <Link
                     href="/meus-pedidos"
-                    className="text-gray-700 hover:text-[var(--primary-teal)] transition-colors py-2"
+                    className="text-gray-700 hover:text-brand-primary transition-colors py-2"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Meus Pedidos

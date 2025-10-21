@@ -1,198 +1,444 @@
-import Link from "next/link"
-import { ProductGrid } from "@/components/product-grid"
-import { HeroSection } from "@/components/hero-section"
-import { ParallaxSection } from "@/components/parallax-section"
-import { Metadata } from "next"
+'use client'
 
-export const metadata: Metadata = {
-  title: "Eu tenho Sonhos - Cartões de Desconto e Leilões Diários | Economize até 80%",
-  description: "Compre cartões de desconto pré-pagos com até 80% de economia. Participe de leilões diários com cupons especiais de 50% off. Produtos exclusivos e ofertas imperdíveis.",
-  keywords: "cartões pré-pagos, cartões de desconto, leilão diário, ofertas especiais, economia, compras online, desconto 80%, cupom 50%",
-  openGraph: {
-    title: "Cartões de Desconto e Leilões | Eu tenho Sonhos",
-    description: "Economize até 80% com cartões pré-pagos e participe de leilões com cupons de 50% off",
-    type: "website",
-  },
+import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { Search, ShoppingCart, Filter, X } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+
+interface Product {
+  id: string
+  title: string
+  description: string
+  price_cents: number
+  stock: number
+  images: string[]
+  active: boolean
+  created_at: string
 }
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "Eu tenho Sonhos",
-  "url": "https://eutenhossonhos.com.br",
-  "description": "Loja online especializada em cartões de desconto pré-pagos e leilões diários",
-  "potentialAction": {
-    "@type": "SearchAction",
-    "target": "https://eutenhossonhos.com.br/produtos?q={search_term_string}",
-    "query-input": "required name=search_term_string"
-  },
-  "offers": {
-    "@type": "AggregateOffer",
-    "priceCurrency": "BRL",
-    "lowPrice": "5",
-    "highPrice": "200",
-    "offerCount": "4"
+interface ProductsResponse {
+  products: Product[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNext: boolean
+    hasPrev: boolean
   }
 }
 
-const organizationData = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "Eu tenho Sonhos",
-  "url": "https://eutenhossonhos.com.br",
-  "logo": "https://eutenhossonhos.com.br/logo.png",
-  "description": "Loja online de cartões de desconto pré-pagos e produtos exclusivos",
-  "contactPoint": {
-    "@type": "ContactPoint",
-    "contactType": "customer service",
-    "availableLanguage": "Portuguese"
+interface Category {
+  id: string
+  name: string
+  description: string
+  _count?: {
+    products: number
   }
 }
 
 export default function HomePage() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  })
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      setCategoriesLoading(true)
+      const response = await fetch('/api/categories?includeCount=true')
+      if (response.ok) {
+        const data = await response.json()
+
+        setCategories(data.categories || [])
+      }
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error)
+    } finally {
+      setCategoriesLoading(false)
+    }
+  }, [])
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      setLoading(true)
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+      })
+      
+      if (search) params.append('search', search)
+      if (selectedCategory) params.append('category', selectedCategory)
+
+      const response = await fetch(`/api/products?${params}`)
+      if (response.ok) {
+        const data: ProductsResponse = await response.json()
+        setProducts(data.products)
+        setPagination(data.pagination)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar produtos:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [pagination.page, pagination.limit, search, selectedCategory])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [fetchProducts])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    setPagination(prev => ({ ...prev, page: 1 }))
+    fetchProducts()
+  }
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+    setPagination(prev => ({ ...prev, page: 1 }))
+    setSidebarOpen(false) // Fechar sidebar no mobile após seleção
+  }
+
+  const clearFilters = () => {
+    setSelectedCategory('')
+    setSearch('')
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
+  const handlePageChange = (newPage: number) => {
+    setPagination(prev => ({ ...prev, page: newPage }))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   return (
-    <>
-      {/* Dados Estruturados para SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Nossos Produtos
+          </h1>
+          <p className="text-gray-600">
+            Descubra nossa seleção de produtos e use seus cartões de desconto para economizar!
+          </p>
+        </div>
 
-      <div className="min-h-screen">
-        {/* Hero Section */}
-        <HeroSection />
-
-        {/* Seção de Cartões de Desconto */}
-        <ParallaxSection speed={0.15} className="py-16 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <header className="text-center mb-12">
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Cartões de Desconto Pré-Pagos
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Economize até 50% nas suas compras com nossos cartões de desconto pré-pagos. 
-                Compre agora e use quando quiser em nossa loja online.
-              </p>
-            </header>
+        {/* Search and Mobile Filter Button */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Buscar produtos..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                />
+              </div>
+              <button
+                type="submit"
+                className="px-6 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary-dark transition-colors"
+              >
+                Buscar
+              </button>
+            </form>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" role="list">
-              {[
-                { value: 'R$ 25', price: 'R$ 5', discount: '80%', savings: 'R$ 20' },
-                { value: 'R$ 50', price: 'R$ 10', discount: '80%', savings: 'R$ 40' },
-                { value: 'R$ 100', price: 'R$ 20', discount: '80%', savings: 'R$ 80' },
-                { value: 'R$ 200', price: 'R$ 40', discount: '80%', savings: 'R$ 160' }
-              ].map((coupon, index) => (
-                <article 
-                  key={index} 
-                  className="bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-lg p-6 text-white text-center shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                  role="listitem"
+            {/* Mobile Filter Button */}
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              <Filter className="w-5 h-5 mr-2" />
+              Filtros
+            </button>
+            
+            {/* Clear Filters Button */}
+            {(selectedCategory || search) && (
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Limpar Filtros
+              </button>
+            )}
+          </div>
+          
+          {/* Active Filters */}
+          {selectedCategory && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-brand-primary text-white">
+                {categories.find(cat => cat.id === selectedCategory)?.name}
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className="ml-2 hover:bg-brand-primary-dark rounded-full p-0.5"
                 >
-                  <div className="text-3xl font-bold mb-2" aria-label={`Cartão de ${coupon.value}`}>
-                    {coupon.value}
-                  </div>
-                  <div className="text-sm opacity-90 mb-2">
-                    por apenas <span className="font-bold text-lg">{coupon.price}</span>
-                  </div>
-                  <div className="text-xs mb-4">
-                    Você economiza <strong>{coupon.savings}</strong>
-                  </div>
-                  <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium mb-4">
-                    {coupon.discount} OFF
-                  </div>
-                  <Link
-                    href="/cupons"
-                    className="block w-full bg-white text-brand-primary py-2 rounded-md font-medium hover:bg-gray-100 transition-all duration-300 transform hover:scale-105"
-                    aria-label={`Comprar cartão de desconto de ${coupon.value}`}
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-8">
+          {/* Sidebar - Desktop */}
+          <div className="hidden lg:block w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Categorias</h3>
+              
+              {categoriesLoading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => handleCategoryChange('')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                      !selectedCategory 
+                        ? 'bg-brand-primary text-white' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
                   >
-                    Comprar Agora
+                    Todas as categorias
+                  </button>
+                  
+                  {Array.isArray(categories) && categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryChange(category.id)}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex justify-between items-center ${
+                        selectedCategory === category.id 
+                          ? 'bg-brand-primary text-white' 
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      <span>{category.name}</span>
+                      {category._count && (
+                        <span className="text-sm opacity-75">
+                          {category._count.products}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div className="lg:hidden fixed inset-0 z-50 flex">
+              <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)}></div>
+              <div className="relative bg-white w-80 max-w-sm p-6 overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Categorias</h3>
+                  <button
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {categoriesLoading ? (
+                  <div className="space-y-3">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <div key={index} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => handleCategoryChange('')}
+                      className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                        !selectedCategory 
+                          ? 'bg-brand-primary text-white' 
+                          : 'hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      Todas as categorias
+                    </button>
+                    
+                    {Array.isArray(categories) && categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => handleCategoryChange(category.id)}
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex justify-between items-center ${
+                          selectedCategory === category.id 
+                            ? 'bg-brand-primary text-white' 
+                            : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <span>{category.name}</span>
+                        {category._count && (
+                          <span className="text-sm opacity-75">
+                            {category._count.products}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <div className="flex-1">
+
+        {/* Products Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+                <div className="w-full h-48 bg-gray-300"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded mb-4"></div>
+                  <div className="h-6 bg-gray-300 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+              <Search className="w-12 h-12 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Nenhum produto encontrado
+            </h3>
+            <p className="text-gray-600">
+              Tente ajustar sua busca ou navegue por todas as categorias.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+              {products.map((product) => (
+                <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+                  <Link href={`/produtos/${product.id}`}>
+                    <div className="relative">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          src={product.images[0]}
+                          alt={product.title}
+                          className="w-full h-48 object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
+                          <img
+                            src="/placeholder-product.svg"
+                            alt="Imagem do produto"
+                            className="w-16 h-16 text-gray-400"
+                          />
+                        </div>
+                      )}
+                      {product.stock <= 5 && product.stock > 0 && (
+                        <div className="absolute top-2 right-2 bg-warning text-white px-2 py-1 rounded text-xs font-medium">
+                Últimas unidades
+              </div>
+            )}
+            {product.stock === 0 && (
+              <div className="absolute top-2 right-2 bg-error text-white px-2 py-1 rounded text-xs font-medium">
+                          Esgotado
+                        </div>
+                      )}
+                    </div>
                   </Link>
-                </article>
+                  
+                  <div className="p-4">
+                    <Link href={`/produtos/${product.id}`}>
+                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-brand-primary transition-colors">
+                        {product.title}
+                      </h3>
+                    </Link>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {product.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-lg font-bold text-brand-primary">
+                        {formatCurrency(product.price_cents)}
+                      </div>
+                      <Link
+                        href={`/produtos/${product.id}`}
+                        className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary-dark transition-colors flex items-center text-sm"
+                      >
+                        <ShoppingCart className="w-4 h-4 mr-1" />
+                        Ver
+                      </Link>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      {product.stock > 0 ? `${product.stock} em estoque` : 'Produto esgotado'}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-            
-            <div className="text-center mt-12">
-              <Link
-                href="/cupons"
-                className="inline-flex items-center px-8 py-4 border-2 border-brand-primary text-lg font-medium rounded-md text-brand-primary bg-white hover:bg-brand-primary hover:text-white transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                aria-label="Ver todos os cartões de desconto disponíveis"
-              >
-                Ver Todos os Cartões de Desconto
-              </Link>
-            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-center items-center space-x-2">
+                <button
+                  onClick={() => handlePageChange(pagination.page - 1)}
+                  disabled={!pagination.hasPrev}
+                  className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Anterior
+                </button>
+                
+                <div className="flex space-x-1">
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    const page = i + 1
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-2 rounded-lg ${
+                          page === pagination.page
+                            ? 'bg-brand-primary text-white'
+                            : 'border border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(pagination.page + 1)}
+                  disabled={!pagination.hasNext}
+                  className="px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            )}
+          </>
+        )}
           </div>
-        </ParallaxSection>
-
-        {/* Produtos em Destaque */}
-        <section className="py-20 bg-gray-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <header className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Produtos em Destaque
-              </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-                Descubra nossa seleção especial de produtos com os melhores preços. 
-                Use seus cartões de desconto e economize ainda mais!
-              </p>
-            </header>
-            
-            <ProductGrid />
-            
-            <div className="text-center mt-16">
-              <Link
-                href="/produtos"
-                className="btn-primary px-8 py-4 text-lg font-medium rounded-lg transition-all duration-300 inline-flex items-center shadow-lg hover:shadow-xl transform hover:scale-105"
-                aria-label="Ver todos os produtos disponíveis na loja"
-              >
-                Ver Todos os Produtos
-              </Link>
-            </div>
-          </div>
-        </section>
-
-
-
-        {/* FAQ Section para SEO */}
-        <section className="py-20 bg-white">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-900 mb-16">
-              Perguntas Frequentes
-            </h2>
-            <div className="space-y-6">
-              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
-                  Como funcionam os cartões de desconto pré-pagos?
-                </summary>
-                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
-                  Você compra o cartão com desconto e recebe um código para usar nas suas compras. 
-                  O valor fica disponível na sua conta para usar quando quiser.
-                </p>
-              </details>
-              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
-                  O que são os leilões diários?
-                </summary>
-                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
-                  São produtos especiais com cartões pré-pagos de 50% de desconto, disponíveis apenas em datas específicas. 
-                  Cada produto tem sua data de leilão programada.
-                </p>
-              </details>
-              <details className="bg-gray-50 rounded-xl p-8 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <summary className="font-semibold text-xl cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
-                  Posso usar múltiplos cupons na mesma compra?
-                </summary>
-                <p className="mt-6 text-gray-600 text-lg leading-relaxed">
-                  Você pode usar cartões de desconto normais (25%) a qualquer momento, mas os cupons de leilão (50%) 
-                  só funcionam em produtos específicos nas datas programadas.
-                </p>
-              </details>
-            </div>
-          </div>
-        </section>
+        </div>
       </div>
-    </>
+    </div>
   )
 }

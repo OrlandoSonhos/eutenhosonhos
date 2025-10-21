@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Gift, ShoppingCart, Check } from 'lucide-react'
+import { Gift, ShoppingCart, Check, Star, Zap, Shield } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface CouponType {
@@ -38,6 +38,10 @@ export default function DiscountCardsPage() {
     fetchCouponTypes()
   }, [])
 
+  const calculateDiscount = (faceValue: number, salePrice: number) => {
+    return Math.round(((faceValue - salePrice) / faceValue) * 100)
+  }
+
   const handleBuyCoupon = async (couponTypeId: string) => {
     if (!session) {
       router.push('/auth/signin')
@@ -45,161 +49,144 @@ export default function DiscountCardsPage() {
     }
 
     setPurchasing(couponTypeId)
-
     try {
       const response = await fetch('/api/coupons/buy', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ couponTypeId })
+        body: JSON.stringify({ couponTypeId }),
       })
 
       const data = await response.json()
 
-      if (!response.ok) {
-        const errorMessage = data?.error || 'Erro ao processar compra'
-        throw new Error(errorMessage)
-      }
-
-      // Redirecionar para o Mercado Pago
-      const checkoutUrl = data.initPoint || data.sandboxInitPoint
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl
+      if (response.ok && data.init_point) {
+        window.location.href = data.init_point
+      } else {
+        console.error('Erro ao processar compra:', data.error)
       }
     } catch (error) {
       console.error('Erro ao comprar cupom:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao processar compra. Tente novamente.'
-      alert(errorMessage)
     } finally {
       setPurchasing(null)
     }
   }
 
-  const calculateDiscount = (faceValue: number, salePrice: number) => {
-    return Math.round(((faceValue - salePrice) / faceValue) * 100)
-  }
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="w-12 h-12 bg-gray-300 rounded-lg mx-auto mb-4 animate-pulse"></div>
-            <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4 animate-pulse"></div>
-            <div className="h-4 bg-gray-300 rounded w-96 mx-auto animate-pulse"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 shadow-md animate-pulse">
-                <div className="h-6 bg-gray-300 rounded mb-4"></div>
-                <div className="h-4 bg-gray-300 rounded mb-6"></div>
-                <div className="h-10 bg-gray-300 rounded"></div>
-              </div>
-            ))}
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando cartões...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] rounded-lg flex items-center justify-center shadow-lg">
-              <Gift className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Gift className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6">
             Cartões de Desconto
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Compre cartões de desconto e economize nas suas compras. 
-            Use quando quiser, válidos por 30 dias!
+          <p className="text-xl text-white/90 max-w-3xl mx-auto mb-8">
+            Economize até 80% nas suas compras com nossos cartões de desconto pré-pagos. 
+            Compre agora e use quando quiser!
           </p>
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            <div className="flex items-center">
+              <Shield className="w-5 h-5 mr-2" />
+              Pagamento 100% Seguro
+            </div>
+            <div className="flex items-center">
+              <Zap className="w-5 h-5 mr-2" />
+              Ativação Instantânea
+            </div>
+            <div className="flex items-center">
+              <Star className="w-5 h-5 mr-2" />
+              Válido por 30 dias
+            </div>
+          </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Cupons Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
           {couponTypes.map((coupon) => {
             const discount = calculateDiscount(coupon.faceValueCents, coupon.salePriceCents)
             const isPurchasing = purchasing === coupon.id
+            const savings = coupon.faceValueCents - coupon.salePriceCents
 
             return (
               <div
                 key={coupon.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-100"
               >
-                {coupon.image_url ? (
-                  <div className="relative h-48 bg-gray-100">
-                    <img 
-                      src={coupon.image_url} 
-                      alt={coupon.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                    <div className="absolute bottom-4 left-4 right-4 text-white text-center">
-                      <div className="text-3xl font-bold mb-2">
-                        {formatCurrency(coupon.faceValueCents)}
-                      </div>
-                      <div className="text-sm opacity-90 mb-2">
-                        por apenas {formatCurrency(coupon.salePriceCents)}
-                      </div>
-                      <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium inline-block">
-                        {discount}% OFF
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] p-6 text-white text-center">
-                    <div className="text-3xl font-bold mb-2">
+                {/* Card Header */}
+                <div className="bg-gradient-to-br from-brand-primary to-brand-primary-dark p-8 text-white text-center relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
+                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="text-4xl font-bold mb-2">
                       {formatCurrency(coupon.faceValueCents)}
                     </div>
-                    <div className="text-sm opacity-90 mb-4">
-                      por apenas {formatCurrency(coupon.salePriceCents)}
+                    <div className="text-lg opacity-90 mb-3">
+                      por apenas <span className="font-bold text-2xl">{formatCurrency(coupon.salePriceCents)}</span>
                     </div>
-                    <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-medium inline-block">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium inline-block">
                       {discount}% OFF
                     </div>
                   </div>
-                )}
+                </div>
                 
+                {/* Card Body */}
                 <div className="p-6">
-                  <p className="text-gray-600 text-sm mb-6">
-                    {coupon.description}
-                  </p>
+                  <div className="text-center mb-6">
+                    <p className="text-green-600 font-semibold text-lg mb-2">
+                      Você economiza {formatCurrency(savings)}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      {coupon.description}
+                    </p>
+                  </div>
                   
-                  <div className="space-y-2 mb-6 text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Check className="w-4 h-4 text-success mr-2" />
-                      Válido por 30 dias
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
+                      Válido por 30 dias após a compra
                     </div>
-                    <div className="flex items-center">
-                      <Check className="w-4 h-4 text-success mr-2" />
-                      Use quando quiser
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
+                      Use em qualquer produto da loja
                     </div>
-                    <div className="flex items-center">
-                      <Check className="w-4 h-4 text-success mr-2" />
-                      Pagamento seguro
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
+                      Ativação automática após pagamento
                     </div>
                   </div>
                   
                   <button
                     onClick={() => handleBuyCoupon(coupon.id)}
                     disabled={isPurchasing}
-                    className="w-full btn-primary py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white py-4 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     {isPurchasing ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                         Processando...
                       </>
                     ) : (
                       <>
-                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        <ShoppingCart className="w-5 h-5 mr-2" />
                         Comprar Agora
                       </>
                     )}
@@ -211,38 +198,74 @@ export default function DiscountCardsPage() {
         </div>
 
         {/* Como funciona */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 lg:p-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
             Como funciona?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-[var(--primary-teal)] font-bold text-lg">1</span>
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-2xl">1</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Escolha seu cartão</h3>
-              <p className="text-gray-600 text-sm">
-                Selecione o valor do cartão de desconto que deseja comprar
+              <h3 className="font-bold text-xl text-gray-900 mb-3">Escolha seu cartão</h3>
+              <p className="text-gray-600">
+                Selecione o valor do cartão de desconto que melhor se adequa às suas necessidades
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-[var(--primary-teal)] font-bold text-lg">2</span>
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-2xl">2</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Pague com segurança</h3>
-              <p className="text-gray-600 text-sm">
-                Pague via PIX ou cartão através do Mercado Pago
+              <h3 className="font-bold text-xl text-gray-900 mb-3">Pague com segurança</h3>
+              <p className="text-gray-600">
+                Pague via PIX, cartão de crédito ou débito através do Mercado Pago com total segurança
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-[var(--primary-teal-light)]/20 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <span className="text-[var(--primary-teal)] font-bold text-lg">3</span>
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <span className="text-white font-bold text-2xl">3</span>
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">Use quando quiser</h3>
-              <p className="text-gray-600 text-sm">
-                Receba o código por email e use em qualquer compra
+              <h3 className="font-bold text-xl text-gray-900 mb-3">Use quando quiser</h3>
+              <p className="text-gray-600">
+                Receba o código por email instantaneamente e use em qualquer compra durante 30 dias
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mt-16 bg-white rounded-2xl shadow-xl p-8 lg:p-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Perguntas Frequentes
+          </h2>
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <details className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors">
+              <summary className="font-semibold text-lg cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                Como posso usar meu cartão de desconto?
+              </summary>
+              <p className="mt-4 text-gray-600 leading-relaxed">
+                Após a compra, você receberá um código por email. No checkout, cole o código no campo "Cupom de Desconto" 
+                e o valor será automaticamente descontado do total da sua compra.
+              </p>
+            </details>
+            <details className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors">
+              <summary className="font-semibold text-lg cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                Por quanto tempo o cartão é válido?
+              </summary>
+              <p className="mt-4 text-gray-600 leading-relaxed">
+                Todos os cartões de desconto são válidos por 30 dias a partir da data de compra. 
+                Após esse período, o cartão expira e não pode mais ser utilizado.
+              </p>
+            </details>
+            <details className="bg-gray-50 rounded-xl p-6 hover:bg-gray-100 transition-colors">
+              <summary className="font-semibold text-lg cursor-pointer text-brand-primary hover:text-brand-primary-dark transition-colors">
+                Posso usar múltiplos cartões na mesma compra?
+              </summary>
+              <p className="mt-4 text-gray-600 leading-relaxed">
+                Atualmente, você pode usar apenas um cartão de desconto por compra. 
+                Escolha o cartão que oferece o melhor benefício para sua compra.
+              </p>
+            </details>
           </div>
         </div>
       </div>
