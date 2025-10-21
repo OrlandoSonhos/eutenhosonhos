@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayment } from '@/lib/mercadopago'
 import { createCoupon, COUPON_TYPES } from '@/lib/coupons'
 import { prismaWithRetry } from '@/lib/prisma-utils'
+import { prisma } from '@/lib/prisma'
 import { sendOrderConfirmationEmail, sendCouponEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
@@ -167,7 +168,7 @@ async function processCouponPayment(paymentData: any) {
     // Se não encontrou pelo email do pagador, buscar sessão ativa mais recente
     if (!userId) {
       console.log('🔍 Buscando usuário por sessão ativa...')
-      const activeSession = await prismaWithRetry.session.findFirst({
+      const activeSession = await prisma.session.findFirst({
         where: {
           expires: {
             gt: new Date()

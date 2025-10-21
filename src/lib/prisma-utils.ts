@@ -112,7 +112,15 @@ export const prismaWithRetry = {
     delete: (args: any) => executeWithRetry(() => prisma.category.delete(args))
   },
 
-
+  session: {
+    count: (args?: any) => executeWithRetry(() => prisma.session.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.session.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.session.findFirst(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.session.findUnique(args)),
+    create: (args: any) => executeWithRetry(() => prisma.session.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.session.update(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.session.delete(args))
+  },
 
   orderItem: {
     count: (args?: any) => executeWithRetry(() => prisma.orderItem.count(args)),
