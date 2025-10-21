@@ -212,7 +212,7 @@ export default function DiscountCardsPage() {
                 Como posso usar meu cartão de desconto?
               </summary>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                Após a compra, você receberá um código por email. No checkout, cole o código no campo "Cupom de Desconto" 
+                Após a compra, você receberá um código por email. No checkout, cole o código no campo "Cartão de Desconto" 
                 e o valor será automaticamente descontado do total da sua compra.
               </p>
             </details>

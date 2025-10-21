@@ -229,7 +229,7 @@ export default function MyDiscountCardsPage() {
                           onClick={() => router.push('/')}
                           className="w-full lg:w-auto bg-brand-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors"
                         >
-                          Usar Cupom
+                          Usar Cartão
                         </button>
                       </div>
                     )}

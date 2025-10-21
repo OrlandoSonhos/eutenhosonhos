@@ -102,7 +102,7 @@ export function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link href="/cupons" className="text-gray-700 hover:text-brand-primary transition-colors">
-              Cupons
+              Cartões de Desconto
             </Link>
             
             <Link href="/meus-cupons" className="text-gray-700 hover:text-brand-primary transition-colors">
@@ -207,7 +207,7 @@ export function Header() {
                 className="text-gray-700 hover:text-brand-primary transition-colors py-2"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Cupons
+                Cartões de Desconto
               </Link>
               {session && (
                 <>

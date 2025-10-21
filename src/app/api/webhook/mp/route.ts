@@ -146,14 +146,50 @@ async function processCouponPayment(paymentData: any) {
     
     console.log('✅ Tipo de cupom encontrado:', couponType.id)
 
-    // Buscar usuário pelo email do pagador
+    // Buscar usuário pelo email do pagador ou sessão ativa
     let userId = null
+    let userEmail = null
+    let userName = 'Cliente'
+
+    // Primeiro, tentar encontrar pelo email do pagador
     if (paymentData.payer?.email) {
       const user = await prismaWithRetry.user.findUnique({
         where: { email: paymentData.payer.email }
       })
-      userId = user?.id
+      if (user) {
+        userId = user.id
+        userEmail = user.email
+        userName = user.name || 'Cliente'
+        console.log('✅ Usuário encontrado pelo email do pagador:', userEmail)
+      }
     }
+
+    // Se não encontrou pelo email do pagador, buscar sessão ativa mais recente
+    if (!userId) {
+      console.log('🔍 Buscando usuário por sessão ativa...')
+      const activeSession = await prismaWithRetry.session.findFirst({
+        where: {
+          expires: {
+            gt: new Date()
+          }
+        },
+        orderBy: {
+          expires: 'desc'
+        },
+        include: {
+          user: true
+        }
+      })
+
+      if (activeSession?.user) {
+        userId = activeSession.user.id
+        userEmail = activeSession.user.email
+        userName = activeSession.user.name || 'Cliente'
+        console.log('✅ Usuário encontrado por sessão ativa:', userEmail)
+      }
+    }
+
+    console.log('👤 Usuário final:', { userId, userEmail, userName })
 
     // Criar cupom
     const coupon = await createCoupon({
@@ -176,23 +212,23 @@ async function processCouponPayment(paymentData: any) {
 
     console.log('Cupom criado com sucesso:', coupon.code)
 
-    // Enviar email com o cupom se houver email do pagador
-    if (paymentData.payer?.email) {
+    // Enviar email com o cupom se houver email do usuário
+    if (userEmail) {
       try {
         console.log('📧 Tentando enviar e-mail do cupom...')
-        console.log('   Para:', paymentData.payer.email)
+        console.log('   Para:', userEmail)
         console.log('   Código:', coupon.code)
         console.log('   Valor:', coupon.faceValueCents)
-        console.log('   Nome:', paymentData.payer.first_name || 'Cliente')
-        console.log('   SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? `"${process.env.SENDGRID_API_KEY}"` : 'undefined')
+        console.log('   Nome:', userName)
+        console.log('   SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'CONFIGURADA' : 'NÃO CONFIGURADA')
         console.log('   SMTP_USER:', process.env.SMTP_USER)
         console.log('   SMTP_PASS:', process.env.SMTP_PASS ? '***configurada***' : 'NÃO CONFIGURADA')
         
         await sendCouponEmail({
-          to: paymentData.payer.email,
+          to: userEmail,
           couponCode: coupon.code,
           couponValue: coupon.faceValueCents,
-          customerName: paymentData.payer.first_name || 'Cliente'
+          customerName: userName
         })
         
         console.log('✅ E-mail do cupom enviado com sucesso!')
@@ -215,6 +251,8 @@ async function processCouponPayment(paymentData: any) {
         }
         // Não falhar o processamento se o email falhar
       }
+    } else {
+      console.log('⚠️ Nenhum email encontrado para enviar o cupom')
     }
 
   } catch (error) {

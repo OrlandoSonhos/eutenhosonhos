@@ -27,7 +27,7 @@ export default function Footer() {
           Produtos
         </a>
         <a href="/cupons" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
-          Cupons
+          Cartões de Desconto
         </a>
         <a href="/contato" className="text-gray-600 hover:text-brand-primary transition-colors text-sm font-medium">
           Contato

@@ -73,7 +73,7 @@ export function generateCouponEmailTemplate(
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Seu Cupom - Eu tenho Sonhos</title>
+      <title>Seu Cartão - Eu tenho Sonhos</title>
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -88,27 +88,27 @@ export function generateCouponEmailTemplate(
       <div class="container">
         <div class="header">
           <h1>Eu tenho Sonhos</h1>
-          <p>Seu cupom está pronto!</p>
+          <p>Seu cartão está pronto!</p>
         </div>
         <div class="content">
           <h2>Olá, ${userName}!</h2>
-          <p>Parabéns! Sua compra foi processada com sucesso e seu cupom já está disponível.</p>
+          <p>Parabéns! Sua compra foi processada com sucesso e seu cartão já está disponível.</p>
           
           <div class="coupon">
-            <h3>Seu Cupom de Desconto</h3>
+            <h3>Seu Cartão de Desconto</h3>
             <div class="coupon-code">${couponCode}</div>
             <p><strong>Valor:</strong> ${faceValue}</p>
             <p><strong>Válido até:</strong> ${expiresAt}</p>
           </div>
           
-          <p>Para usar seu cupom:</p>
+          <p>Para usar seu cartão:</p>
           <ol>
             <li>Adicione produtos ao carrinho</li>
-            <li>No checkout, insira o código do cupom</li>
+            <li>No checkout, insira o código do cartão</li>
             <li>O desconto será aplicado automaticamente</li>
           </ol>
           
-          <p><strong>Importante:</strong> Este cupom pode ser usado apenas uma vez e expira na data indicada.</p>
+          <p><strong>Importante:</strong> Este cartão pode ser usado apenas uma vez e expira na data indicada.</p>
         </div>
         <div class="footer">
           <p>Obrigado por escolher a Eu tenho Sonhos!</p>

@@ -11,7 +11,7 @@ export default function CouponSuccessPage() {
             Pagamento Aprovado!
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Seu cupom foi processado com sucesso
+            Seu cartão foi processado com sucesso
           </p>
         </div>
         
@@ -20,8 +20,8 @@ export default function CouponSuccessPage() {
             Próximos passos:
           </h3>
           <ul className="space-y-2 text-sm text-gray-600">
-            <li>• Você receberá um e-mail com o código do seu cupom</li>
-            <li>• O cupom será válido por 30 dias</li>
+            <li>• Você receberá um e-mail com o código do seu cartão</li>
+            <li>• O cartão será válido por 30 dias</li>
             <li>• Use o código no checkout para aplicar o desconto</li>
           </ul>
         </div>
