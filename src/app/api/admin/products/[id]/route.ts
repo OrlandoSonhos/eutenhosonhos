@@ -11,7 +11,7 @@ const updateProductSchema = z.object({
   stock: z.number().min(0, 'Estoque não pode ser negativo').optional(),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória').optional(),
   active: z.boolean().optional(),
-  category_id: z.number().nullable().optional(),
+  category_id: z.string().nullable().optional(),
   is_auction: z.boolean().optional(),
   auction_date: z.string().datetime().nullable().optional(),
   auction_end_date: z.string().datetime().nullable().optional()
@@ -125,21 +125,13 @@ export async function PUT(
         const categoryExists = await prismaWithRetry.category.findUnique({
           where: { id: productData.category_id },
           select: {
-            id: true,
-            active: true
+            id: true
           }
-        }) as { id: number; active: boolean } | null
+        }) as { id: string } | null
 
         if (!categoryExists) {
           return NextResponse.json(
             { error: 'Categoria não encontrada' },
-            { status: 400 }
-          )
-        }
-
-        if (!categoryExists.active) {
-          return NextResponse.json(
-            { error: 'Categoria não está ativa' },
             { status: 400 }
           )
         }

@@ -148,37 +148,37 @@ export async function expireOldCoupons() {
 export const COUPON_TYPES = [
   {
     id: 'cupom001',
-    name: 'Cupom R$ 0,01',
+    name: 'Cartão 0% de Desconto',
     faceValueCents: 1,
     salePriceCents: 1,
-    description: 'Cupom de teste de R$ 0,01 por apenas R$ 0,01'
+    description: 'Cartão de teste com 0% de desconto por apenas R$ 0,01'
   },
   {
     id: 'cupom25',
-    name: 'Cupom R$ 25',
+    name: 'Cartão 80% de Desconto',
     faceValueCents: 2500,
     salePriceCents: 500,
-    description: 'Cupom de desconto de R$ 25 por apenas R$ 5'
+    description: 'Cartão com 80% de desconto - economize até R$ 25 por apenas R$ 5'
   },
   {
     id: 'cupom50',
-    name: 'Cupom R$ 50',
+    name: 'Cartão 80% de Desconto',
     faceValueCents: 5000,
     salePriceCents: 1000,
-    description: 'Cupom de desconto de R$ 50 por apenas R$ 10'
+    description: 'Cartão com 80% de desconto - economize até R$ 50 por apenas R$ 10'
   },
   {
     id: 'cupom100',
-    name: 'Cupom R$ 100',
+    name: 'Cartão 80% de Desconto',
     faceValueCents: 10000,
     salePriceCents: 2000,
-    description: 'Cupom de desconto de R$ 100 por apenas R$ 20'
+    description: 'Cartão com 80% de desconto - economize até R$ 100 por apenas R$ 20'
   },
   {
     id: 'cupom200',
-    name: 'Cupom R$ 200',
+    name: 'Cartão 80% de Desconto',
     faceValueCents: 20000,
     salePriceCents: 4000,
-    description: 'Cupom de desconto de R$ 200 por apenas R$ 40'
+    description: 'Cartão com 80% de desconto - economize até R$ 200 por apenas R$ 40'
   }
 ]

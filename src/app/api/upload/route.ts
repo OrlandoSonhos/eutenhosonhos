@@ -9,15 +9,15 @@ export async function POST(request: NextRequest) {
     // Verificar se o usuário está autenticado e é admin
     const session = await getServerSession(authOptions)
     
-    if (!session?.user?.email) {
+    if (!session?.user) {
       return NextResponse.json(
         { error: 'Não autorizado' },
         { status: 401 }
       )
     }
 
-    // Verificar se é admin (você pode ajustar esta lógica conforme necessário)
-    if (session.user.email !== 'admin@ets.com') {
+    // Verificar se é admin
+    if ((session.user as any).role !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }

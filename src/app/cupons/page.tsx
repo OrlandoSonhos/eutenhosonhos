@@ -96,56 +96,30 @@ export default function DiscountCardsPage() {
             return (
               <div
                 key={coupon.id}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-100"
+                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-200"
               >
-                {/* Card Header */}
-                <div className="bg-gradient-to-br from-brand-primary to-brand-primary-dark p-8 text-white text-center relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10"></div>
-                  <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full -ml-8 -mb-8"></div>
-                  
-                  <div className="relative z-10">
-                    <div className="text-4xl font-bold mb-2">
-                      {formatCurrency(coupon.faceValueCents)}
-                    </div>
-                    <div className="text-lg opacity-90 mb-3">
-                      por apenas <span className="font-bold text-2xl">{formatCurrency(coupon.salePriceCents)}</span>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium inline-block">
-                      {discount}% OFF
-                    </div>
+                {/* Card Header - Destaque da Porcentagem */}
+                <div className="bg-gradient-to-br from-brand-primary to-brand-primary-dark p-8 text-white text-center">
+                  <div className="text-6xl font-bold text-yellow-300 mb-2">
+                    {discount}%
+                  </div>
+                  <div className="text-xl font-semibold">
+                    DE DESCONTO
                   </div>
                 </div>
                 
                 {/* Card Body */}
                 <div className="p-6">
                   <div className="text-center mb-6">
-                    <p className="text-green-600 font-semibold text-lg mb-2">
-                      Você economiza {formatCurrency(savings)}
-                    </p>
-                    <p className="text-gray-600 text-sm">
-                      {coupon.description}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                      Válido por 30 dias após a compra
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                      Use em qualquer produto da loja
-                    </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
-                      Ativação automática após pagamento
+                    <div className="text-2xl font-bold text-gray-900">
+                      {formatCurrency(coupon.salePriceCents)}
                     </div>
                   </div>
                   
                   <button
                     onClick={() => handleBuyCoupon(coupon.id)}
                     disabled={isPurchasing}
-                    className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white py-4 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white py-4 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                   >
                     {isPurchasing ? (
                       <>
@@ -155,7 +129,7 @@ export default function DiscountCardsPage() {
                     ) : (
                       <>
                         <ShoppingCart className="w-5 h-5 mr-2" />
-                        Comprar Agora
+                        Comprar
                       </>
                     )}
                   </button>

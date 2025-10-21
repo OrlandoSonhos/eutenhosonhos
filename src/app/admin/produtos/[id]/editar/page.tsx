@@ -13,7 +13,7 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface Category {
-  id: number
+  id: string
   name: string
   description?: string
 }
@@ -25,7 +25,7 @@ interface ProductForm {
   stock: number
   images: string[]
   active: boolean
-  category_id?: number
+  category_id?: string
 }
 
 interface Product extends ProductForm {
@@ -346,7 +346,7 @@ function EditProductContent({ productId }: { productId: string }) {
                 value={form.category_id || ''}
                 onChange={(e) => setForm(prev => ({ 
                   ...prev, 
-                  category_id: e.target.value ? parseInt(e.target.value) : undefined 
+                  category_id: e.target.value || undefined 
                 }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={loadingCategories}

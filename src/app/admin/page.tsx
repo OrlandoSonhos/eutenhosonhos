@@ -233,7 +233,7 @@ export default function AdminDashboard() {
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">Pedidos Recentes</h3>
             </div>
             <div className="p-4 sm:p-6">
-              {stats.recentOrders.length > 0 ? (
+              {stats.recentOrders && stats.recentOrders.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
                   {stats.recentOrders.map((order: any) => (
                     <div key={order.id} className="flex justify-between items-center">
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
               <h3 className="text-base sm:text-lg font-semibold text-gray-900">Cartões Recentes</h3>
             </div>
             <div className="p-4 sm:p-6">
-              {stats.recentCoupons.length > 0 ? (
+              {stats.recentCoupons && stats.recentCoupons.length > 0 ? (
                 <div className="space-y-3 sm:space-y-4">
                   {stats.recentCoupons.map((coupon: any) => (
                     <div key={coupon.id} className="flex justify-between items-center">

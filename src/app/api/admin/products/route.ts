@@ -11,7 +11,7 @@ const createProductSchema = z.object({
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória'),
   active: z.boolean().default(true),
-  category_id: z.number().optional()
+  category_id: z.string().nullable().optional()
 })
 
 // GET - Listar produtos (admin)
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         ]
       }),
       ...(active !== null && active !== undefined && { active: active === 'true' }),
-      ...(categoryId && { category_id: parseInt(categoryId) })
+      ...(categoryId && { category_id: categoryId })
     }
 
     const [products, total] = await Promise.all([
@@ -110,21 +110,13 @@ export async function POST(request: NextRequest) {
       const categoryExists = await prismaWithRetry.category.findUnique({
         where: { id: productData.category_id },
         select: {
-          id: true,
-          active: true
+          id: true
         }
-      }) as { id: number; active: boolean } | null
+      }) as { id: string } | null
 
       if (!categoryExists) {
         return NextResponse.json(
           { error: 'Categoria não encontrada' },
-          { status: 400 }
-        )
-      }
-
-      if (!categoryExists.active) {
-        return NextResponse.json(
-          { error: 'Categoria não está ativa' },
           { status: 400 }
         )
       }
