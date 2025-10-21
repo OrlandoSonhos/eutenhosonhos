@@ -129,7 +129,7 @@ export function ProductGrid() {
               <span className="text-sm text-gray-500 ml-2">(4.8)</span>
             </div>
             
-            <h3 className="font-bold text-gray-900 mb-3 line-clamp-2 text-lg group-hover:text-brand-primary transition-colors">
+            <h3 className="font-bold text-gray-900 mb-3 text-lg group-hover:text-brand-primary transition-colors truncate">
               {product.title}
             </h3>
             
