@@ -60,8 +60,8 @@ export default function DiscountCardsPage() {
 
       const data = await response.json()
 
-      if (response.ok && data.init_point) {
-        window.location.href = data.init_point
+      if (response.ok && data.initPoint) {
+        window.location.href = data.initPoint
       } else {
         console.error('Erro ao processar compra:', data.error)
       }
@@ -85,38 +85,6 @@ export default function DiscountCardsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-brand-primary to-brand-primary-dark text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Gift className="w-8 h-8 text-white" />
-            </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Cartões de Desconto
-          </h1>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto mb-8">
-            Economize até 80% nas suas compras com nossos cartões de desconto pré-pagos. 
-            Compre agora e use quando quiser!
-          </p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm">
-            <div className="flex items-center">
-              <Shield className="w-5 h-5 mr-2" />
-              Pagamento 100% Seguro
-            </div>
-            <div className="flex items-center">
-              <Zap className="w-5 h-5 mr-2" />
-              Ativação Instantânea
-            </div>
-            <div className="flex items-center">
-              <Star className="w-5 h-5 mr-2" />
-              Válido por 30 dias
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Cupons Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">

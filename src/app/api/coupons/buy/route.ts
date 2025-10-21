@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Buscar cartões pré-pagos disponíveis agrupados por valor
+    // Buscar cartões pré-pagos disponíveis
     const availableCoupons = await prisma.coupon.findMany({
       where: {
         status: 'AVAILABLE',
@@ -103,39 +103,38 @@ export async function GET() {
       select: {
         face_value_cents: true,
         sale_price_cents: true
-      },
-      distinct: ['face_value_cents']
-    })
-
-    // Filtrar cupons com face_value_cents válido e agrupar por valor
-    const couponTypeMap = new Map()
-    
-    availableCoupons
-      .filter(coupon => coupon.face_value_cents != null && coupon.face_value_cents > 0)
-      .forEach(coupon => {
-        const key = coupon.face_value_cents
-        if (!couponTypeMap.has(key)) {
-        couponTypeMap.set(key, {
-          id: `prepaid-${coupon.face_value_cents}`,
-          name: `Cartão Pré-pago R$ ${(coupon.face_value_cents / 100).toFixed(2)}`,
-          faceValueCents: coupon.face_value_cents,
-          salePriceCents: coupon.sale_price_cents,
-          description: `Cartão pré-pago de R$ ${(coupon.face_value_cents / 100).toFixed(2)} por apenas R$ ${(coupon.sale_price_cents / 100).toFixed(2)}`
-        })
       }
     })
-    
-    const couponTypes = Array.from(couponTypeMap.values())
 
-    // Se não há cartões no banco, retornar os tipos estáticos como fallback
-    if (couponTypes.length === 0) {
+    // Se não há cartões no banco, retornar os tipos estáticos
+    if (availableCoupons.length === 0) {
       return NextResponse.json({
         couponTypes: COUPON_TYPES
       })
     }
 
+    // Agrupar por valor e criar tipos de cupom únicos
+    const uniqueValues = [...new Set(availableCoupons
+      .filter(coupon => coupon.face_value_cents != null && coupon.face_value_cents > 0)
+      .map(coupon => coupon.face_value_cents)
+    )]
+    
+    const couponTypes = uniqueValues.map(faceValueCents => {
+      const coupon = availableCoupons.find(c => c.face_value_cents === faceValueCents)
+      return {
+        id: `prepaid-${faceValueCents}`,
+        name: `Cartão Pré-pago R$ ${(faceValueCents / 100).toFixed(2)}`,
+        faceValueCents: faceValueCents,
+        salePriceCents: coupon?.sale_price_cents || 0,
+        description: `Cartão pré-pago de R$ ${(faceValueCents / 100).toFixed(2)} por apenas R$ ${((coupon?.sale_price_cents || 0) / 100).toFixed(2)}`
+      }
+    })
+
+    // Garantir que todos os objetos tenham ID
+    const validCouponTypes = couponTypes.filter(coupon => coupon.id && coupon.id.length > 0)
+
     return NextResponse.json({
-      couponTypes
+      couponTypes: validCouponTypes
     })
   } catch (error) {
     console.error('Erro ao buscar cartões pré-pagos:', error)

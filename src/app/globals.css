@@ -40,16 +40,78 @@
   --color-accent-light: var(--accent-gold-light);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-  }
+/* Forçar modo claro para garantir contraste adequado */
+:root {
+  --background: #ffffff !important;
+  --foreground: #1a1a1a !important;
+}
+
+/* Garantir contraste adequado em todos os elementos */
+.bg-white {
+  background-color: #ffffff !important;
+}
+
+.text-gray-900 {
+  color: #0f172a !important;
+}
+
+.text-gray-600 {
+  color: #475569 !important;
+}
+
+.text-gray-700 {
+  color: #334155 !important;
+}
+
+.text-gray-800 {
+  color: #1e293b !important;
+}
+
+.text-white {
+  color: #ffffff !important;
+}
+
+/* Garantir que o body sempre use fundo branco */
+body {
+  background-color: #ffffff !important;
+  color: #1a1a1a !important;
+}
+
+/* Regras específicas para garantir contraste em todos os cenários */
+* {
+  color: inherit !important;
+}
+
+div, p, span, h1, h2, h3, h4, h5, h6 {
+  color: inherit !important;
+}
+
+/* Garantir que fundos brancos sempre tenham texto escuro */
+.bg-white, .bg-gray-50, .bg-gray-100 {
+  color: #1a1a1a !important;
+}
+
+/* Garantir que fundos escuros sempre tenham texto branco */
+.bg-brand-primary, .bg-brand-primary-dark, .bg-gray-800, .bg-gray-900 {
+  color: #ffffff !important;
+}
+
+/* Garantir visibilidade de textos específicos */
+.text-gray-600 {
+  color: #475569 !important;
+}
+
+.text-gray-700 {
+  color: #334155 !important;
+}
+
+.text-gray-900 {
+  color: #0f172a !important;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #ffffff !important;
+  color: #1a1a1a !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
 }
