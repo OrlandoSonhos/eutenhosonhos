@@ -147,7 +147,7 @@ async function processMerchantOrderWebhook(merchantOrderId: string) {
         
         // Verificar se já processamos este pagamento
         const existingPayment = await prismaWithRetry.payment.findFirst({
-          where: { mp_payment_id: payment.id.toString() }
+          where: { mp_payment_id: String(payment.id) }
         })
 
         if (existingPayment) {
@@ -157,7 +157,7 @@ async function processMerchantOrderWebhook(merchantOrderId: string) {
 
         // Buscar detalhes completos do pagamento
         try {
-          const paymentData = await getPayment(payment.id.toString())
+          const paymentData = await getPayment(String(payment.id))
           
           if (paymentData.status === 'approved') {
             await processPaymentData(paymentData)
