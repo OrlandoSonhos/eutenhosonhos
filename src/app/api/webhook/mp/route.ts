@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
       await processPaymentWebhook(paymentId)
       return NextResponse.json({ status: 'processed' })
       
-    } else if (body.type === 'merchant_order') {
-      const merchantOrderId = body.data?.id
+    } else if (body.type === 'merchant_order' || body.type === 'topic_merchant_order_wh') {
+      const merchantOrderId = body.data?.id || body.id
       if (!merchantOrderId) {
         return NextResponse.json({ error: 'Merchant Order ID não encontrado' }, { status: 400 })
       }
