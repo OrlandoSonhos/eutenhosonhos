@@ -232,47 +232,35 @@ async function processCouponPayment(paymentData: any) {
     
     console.log('✅ Tipo de cupom encontrado:', couponType.id)
 
-    // Buscar usuário pelo email do pagador ou sessão ativa
+    // Buscar APENAS usuário logado (sessão ativa)
     let userId = null
     let userEmail = null
     let userName = 'Cliente'
 
-    // Primeiro, tentar encontrar pelo email do pagador
-    if (paymentData.payer?.email) {
-      const user = await prismaWithRetry.user.findUnique({
-        where: { email: paymentData.payer.email }
-      })
-      if (user) {
-        userId = user.id
-        userEmail = user.email
-        userName = user.name || 'Cliente'
-        console.log('✅ Usuário encontrado pelo email do pagador:', userEmail)
-      }
-    }
-
-    // Se não encontrou pelo email do pagador, buscar sessão ativa mais recente
-    if (!userId) {
-      console.log('🔍 Buscando usuário por sessão ativa...')
-      const activeSession = await prisma.session.findFirst({
-        where: {
-          expires: {
-            gt: new Date()
-          }
-        },
-        orderBy: {
-          expires: 'desc'
-        },
-        include: {
-          user: true
+    console.log('🔍 Buscando usuário logado (sessão ativa)...')
+    const activeSession = await prisma.session.findFirst({
+      where: {
+        expires: {
+          gt: new Date()
         }
-      })
-
-      if (activeSession?.user) {
-        userId = activeSession.user.id
-        userEmail = activeSession.user.email
-        userName = activeSession.user.name || 'Cliente'
-        console.log('✅ Usuário encontrado por sessão ativa:', userEmail)
+      },
+      orderBy: {
+        expires: 'desc'
+      },
+      include: {
+        user: true
       }
+    })
+
+    if (activeSession?.user) {
+      userId = activeSession.user.id
+      userEmail = activeSession.user.email
+      userName = activeSession.user.name || 'Cliente'
+      console.log('✅ Usuário logado encontrado:', userEmail)
+    } else {
+      console.log('❌ Nenhum usuário logado encontrado')
+      console.log('   O cupom será criado mas não será enviado por e-mail')
+      console.log('   Para receber cupons por e-mail, o usuário deve estar logado')
     }
 
     console.log('👤 Usuário final:', { userId, userEmail, userName })
@@ -338,7 +326,9 @@ async function processCouponPayment(paymentData: any) {
         // Não falhar o processamento se o email falhar
       }
     } else {
-      console.log('⚠️ Nenhum email encontrado para enviar o cupom')
+      console.log('⚠️ Nenhum usuário logado encontrado - cupom criado mas e-mail não enviado')
+      console.log('   💡 Para receber cupons por e-mail automaticamente, faça login antes do pagamento')
+      console.log('   📋 O cupom pode ser acessado em /meus-cupons após fazer login')
     }
 
   } catch (error) {
