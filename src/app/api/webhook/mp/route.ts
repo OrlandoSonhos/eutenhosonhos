@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayment } from '@/lib/mercadopago'
+import { getPayment, getMerchantOrder } from '@/lib/mercadopago'
 import { createCoupon, COUPON_TYPES } from '@/lib/coupons'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { prisma } from '@/lib/prisma'
@@ -14,104 +14,33 @@ export async function POST(request: NextRequest) {
     const headers = Object.fromEntries(request.headers.entries())
     console.log('📋 Headers do webhook:', headers)
 
-    // Verificar se é uma notificação de pagamento
-    if (body.type !== 'payment') {
+    // Verificar se é uma notificação de pagamento ou merchant order
+    if (body.type === 'payment') {
+      const paymentId = body.data?.id
+      if (!paymentId) {
+        return NextResponse.json({ error: 'Payment ID não encontrado' }, { status: 400 })
+      }
+      
+      // Processar pagamento diretamente
+      await processPaymentWebhook(paymentId)
+      return NextResponse.json({ status: 'processed' })
+      
+    } else if (body.type === 'merchant_order') {
+      const merchantOrderId = body.data?.id
+      if (!merchantOrderId) {
+        return NextResponse.json({ error: 'Merchant Order ID não encontrado' }, { status: 400 })
+      }
+      
+      // Processar merchant order
+      await processMerchantOrderWebhook(merchantOrderId)
+      return NextResponse.json({ status: 'processed' })
+      
+    } else {
+      console.log('🔕 Tipo de webhook ignorado:', body.type)
       return NextResponse.json({ status: 'ignored' })
     }
 
-    const paymentId = body.data?.id
-    if (!paymentId) {
-      return NextResponse.json({ error: 'Payment ID não encontrado' }, { status: 400 })
-    }
 
-    // Buscar detalhes do pagamento no Mercado Pago
-    console.log('🔍 Buscando pagamento no MP, ID:', paymentId)
-    let paymentData
-    
-    // Verificar se é um pagamento de teste (para desenvolvimento)
-    if (paymentId.startsWith('test_payment_')) {
-      console.log('🧪 MODO TESTE - Simulando dados de pagamento')
-      paymentData = {
-        id: paymentId,
-        status: 'approved',
-        external_reference: 'coupon-' + Date.now(),
-        transaction_amount: 0.01,
-        payment_method_id: 'pix',
-        payer: {
-          email: 'vini_deiro@icloud.com',
-          first_name: 'Vinicius'
-        }
-      }
-    } else {
-      try {
-        paymentData = await getPayment(paymentId)
-      } catch (error: any) {
-        console.log('❌ Erro ao buscar pagamento no MP:', error)
-        
-        // Se o pagamento não foi encontrado, pode ser um webhook antigo ou inválido
-        if (error?.status === 404 || error?.cause?.[0]?.code === 2000) {
-          console.log('Pagamento não encontrado - ignorando webhook')
-          return NextResponse.json({ status: 'payment_not_found', message: 'Pagamento não encontrado - webhook ignorado' })
-        }
-        
-        // Para outros erros, relançar
-        throw error
-      }
-    }
-    
-    if (!paymentData) {
-      console.log('❌ Pagamento não encontrado no MP')
-      return NextResponse.json({ error: 'Pagamento não encontrado' }, { status: 404 })
-    }
-
-    console.log('💰 Dados do pagamento:', {
-      id: paymentData.id,
-      status: paymentData.status,
-      external_reference: paymentData.external_reference,
-      transaction_amount: paymentData.transaction_amount,
-      payment_method_id: paymentData.payment_method_id
-    })
-
-    // Verificar se o pagamento foi aprovado
-    if (paymentData.status !== 'approved') {
-      console.log('Pagamento não aprovado, status:', paymentData.status)
-      return NextResponse.json({ status: 'payment_not_approved' })
-    }
-
-    // Verificar se já processamos este pagamento
-    const existingPayment = await prismaWithRetry.payment.findFirst({
-      where: { mp_payment_id: paymentId.toString() }
-    })
-
-    if (existingPayment) {
-      console.log('Pagamento já processado')
-      return NextResponse.json({ status: 'already_processed' })
-    }
-
-    const externalReference = paymentData.external_reference
-    
-    console.log('🔍 DECISÃO DE PROCESSAMENTO:')
-    console.log('   external_reference:', externalReference)
-    console.log('   É cupom?', externalReference?.startsWith('coupon-'))
-    console.log('   É pedido?', externalReference?.startsWith('order-'))
-    
-    // Processar pagamento de cupom
-    if (externalReference?.startsWith('coupon-')) {
-      console.log('🎫 PROCESSANDO COMO CUPOM...')
-      await processCouponPayment(paymentData)
-    }
-    // Processar pagamento de pedido
-    else if (externalReference?.startsWith('order-')) {
-      console.log('📦 PROCESSANDO COMO PEDIDO...')
-      await processOrderPayment(paymentData)
-    }
-    else {
-      console.log('❌ EXTERNAL_REFERENCE INVÁLIDO OU AUSENTE!')
-      console.log('   Valor recebido:', externalReference)
-      return NextResponse.json({ error: 'External reference inválido' }, { status: 400 })
-    }
-
-    return NextResponse.json({ status: 'processed' })
 
   } catch (error) {
     console.error('Erro no webhook MP:', error)
@@ -119,6 +48,162 @@ export async function POST(request: NextRequest) {
       { error: 'Erro interno do servidor' },
       { status: 500 }
     )
+  }
+}
+
+async function processPaymentWebhook(paymentId: string) {
+  console.log('🔍 Processando webhook de pagamento, ID:', paymentId)
+  
+  // Buscar detalhes do pagamento no Mercado Pago
+  let paymentData
+  
+  // Verificar se é um pagamento de teste (para desenvolvimento)
+  if (paymentId.startsWith('test_payment_')) {
+    console.log('🧪 MODO TESTE - Simulando dados de pagamento')
+    paymentData = {
+      id: paymentId,
+      status: 'approved',
+      external_reference: 'coupon-' + Date.now(),
+      transaction_amount: 0.01,
+      payment_method_id: 'pix',
+      payer: {
+        email: 'vini_deiro@icloud.com',
+        first_name: 'Vinicius'
+      }
+    }
+  } else {
+    try {
+      paymentData = await getPayment(paymentId)
+    } catch (error: any) {
+      console.log('❌ Erro ao buscar pagamento no MP:', error)
+      
+      // Se o pagamento não foi encontrado, pode ser um webhook antigo ou inválido
+      if (error?.status === 404 || error?.cause?.[0]?.code === 2000) {
+        console.log('Pagamento não encontrado - ignorando webhook')
+        return
+      }
+      
+      // Para outros erros, relançar
+      throw error
+    }
+  }
+  
+  if (!paymentData) {
+    console.log('❌ Pagamento não encontrado no MP')
+    return
+  }
+
+  console.log('💰 Dados do pagamento:', {
+    id: paymentData.id,
+    status: paymentData.status,
+    external_reference: paymentData.external_reference,
+    transaction_amount: paymentData.transaction_amount,
+    payment_method_id: paymentData.payment_method_id
+  })
+
+  // Verificar se o pagamento foi aprovado
+  if (paymentData.status !== 'approved') {
+    console.log('Pagamento não aprovado, status:', paymentData.status)
+    return
+  }
+
+  // Verificar se já processamos este pagamento
+  const existingPayment = await prismaWithRetry.payment.findFirst({
+    where: { mp_payment_id: paymentId.toString() }
+  })
+
+  if (existingPayment) {
+    console.log('Pagamento já processado')
+    return
+  }
+
+  await processPaymentData(paymentData)
+}
+
+async function processMerchantOrderWebhook(merchantOrderId: string) {
+  console.log('🏪 Processando webhook de merchant order, ID:', merchantOrderId)
+  
+  try {
+    // Buscar detalhes da merchant order no Mercado Pago
+    const merchantOrder = await getMerchantOrder(merchantOrderId)
+    
+    console.log('🏪 Dados da merchant order:', {
+      id: merchantOrder.id,
+      status: merchantOrder.status,
+      total_amount: merchantOrder.total_amount,
+      payments: merchantOrder.payments?.length || 0
+    })
+
+    // Verificar se a ordem está fechada (paga)
+    if (merchantOrder.status !== 'closed') {
+      console.log('Merchant order não está fechada, status:', merchantOrder.status)
+      return
+    }
+
+    // Processar cada pagamento da merchant order
+    if (merchantOrder.payments && merchantOrder.payments.length > 0) {
+      for (const payment of merchantOrder.payments) {
+        console.log(`💳 Processando pagamento ${payment.id} da merchant order`)
+        
+        // Verificar se já processamos este pagamento
+        const existingPayment = await prismaWithRetry.payment.findFirst({
+          where: { mp_payment_id: payment.id.toString() }
+        })
+
+        if (existingPayment) {
+          console.log(`Pagamento ${payment.id} já processado`)
+          continue
+        }
+
+        // Buscar detalhes completos do pagamento
+        try {
+          const paymentData = await getPayment(payment.id.toString())
+          
+          if (paymentData.status === 'approved') {
+            await processPaymentData(paymentData)
+          } else {
+            console.log(`Pagamento ${payment.id} não aprovado, status:`, paymentData.status)
+          }
+        } catch (error) {
+          console.error(`Erro ao processar pagamento ${payment.id}:`, error)
+        }
+      }
+    } else {
+      console.log('❌ Merchant order sem pagamentos')
+    }
+    
+  } catch (error) {
+    console.error('Erro ao processar merchant order:', error)
+    throw error
+  }
+}
+
+async function processPaymentData(paymentData: any) {
+  const externalReference = paymentData.external_reference
+  
+  console.log('🔍 DECISÃO DE PROCESSAMENTO:')
+  console.log('   external_reference:', externalReference)
+  console.log('   É cupom?', externalReference?.startsWith('coupon-'))
+  console.log('   É pedido?', externalReference?.startsWith('order-'))
+  
+  // Processar pagamento de cupom
+  if (externalReference?.startsWith('coupon-')) {
+    console.log('🎫 PROCESSANDO COMO CUPOM...')
+    await processCouponPayment(paymentData)
+  }
+  // Processar pagamento de pedido
+  else if (externalReference?.startsWith('order-')) {
+    console.log('📦 PROCESSANDO COMO PEDIDO...')
+    await processOrderPayment(paymentData)
+  }
+  else {
+    console.log('❌ EXTERNAL_REFERENCE INVÁLIDO OU AUSENTE!')
+    console.log('   Valor recebido:', externalReference)
+    
+    // Para merchant orders sem external_reference, tentar processar como cupom
+    // baseado no valor pago
+    console.log('🔄 Tentando processar como cupom baseado no valor...')
+    await processCouponPayment(paymentData)
   }
 }
 

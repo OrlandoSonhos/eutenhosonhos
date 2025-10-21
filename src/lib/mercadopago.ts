@@ -1,4 +1,4 @@
-import { MercadoPagoConfig, Preference, Payment } from 'mercadopago'
+import { MercadoPagoConfig, Preference, Payment, MerchantOrder } from 'mercadopago'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -10,6 +10,7 @@ const client = new MercadoPagoConfig({
 
 const preference = new Preference(client)
 const payment = new Payment(client)
+const merchantOrder = new MerchantOrder(client)
 
 export interface CreatePreferenceData {
   items: Array<{
@@ -61,6 +62,16 @@ export async function getPayment(paymentId: string) {
     return response
   } catch (error) {
     console.error('Erro ao buscar pagamento no Mercado Pago:', error)
+    throw error
+  }
+}
+
+export async function getMerchantOrder(merchantOrderId: string) {
+  try {
+    const response = await merchantOrder.get({ merchantOrderId })
+    return response
+  } catch (error) {
+    console.error('Erro ao buscar merchant order no Mercado Pago:', error)
     throw error
   }
 }
