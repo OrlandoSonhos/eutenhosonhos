@@ -203,17 +203,21 @@ export const COUPON_TYPES = [
   },
   {
     id: 'cupom25',
-    name: 'Cartão 80% de Desconto',
-    faceValueCents: 2500,
+    name: 'Cupom 25% de Desconto',
+    faceValueCents: 0,
     salePriceCents: 500,
-    description: 'Cartão com 80% de desconto - economize até R$ 25 por apenas R$ 5'
+    description: 'Cupom de 25% de desconto em qualquer compra',
+    discountPercent: 25,
+    isPercentual: true
   },
   {
     id: 'cupom50',
-    name: 'Cartão 80% de Desconto',
-    faceValueCents: 5000,
+    name: 'Cupom 50% de Desconto',
+    faceValueCents: 0,
     salePriceCents: 1000,
-    description: 'Cartão com 80% de desconto - economize até R$ 50 por apenas R$ 10'
+    description: 'Cupom de 50% de desconto em qualquer compra',
+    discountPercent: 50,
+    isPercentual: true
   },
   {
     id: 'cupom100',
