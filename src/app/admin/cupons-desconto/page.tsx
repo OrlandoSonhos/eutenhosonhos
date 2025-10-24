@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-hot-toast'
 
@@ -23,7 +25,6 @@ interface DiscountCoupon {
 }
 
 interface CreateCouponData {
-  code: string
   discount_percent: number
   type: 'PERMANENT_25' | 'SPECIAL_50'
   sale_price_cents?: number
@@ -33,14 +34,28 @@ interface CreateCouponData {
   max_uses?: number
 }
 
+interface EditCouponData extends CreateCouponData {
+  // Código não é editável, é gerado automaticamente
+}
+
 export default function DiscountCouponsPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [coupons, setCoupons] = useState<DiscountCoupon[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [selectedCoupon, setSelectedCoupon] = useState<DiscountCoupon | null>(null)
   const [formData, setFormData] = useState<CreateCouponData>({
-    code: '',
+    discount_percent: 25,
+    type: 'PERMANENT_25',
+    sale_price_cents: undefined,
+    is_active: true,
+    valid_from: '',
+    valid_until: '',
+    max_uses: undefined
+  })
+  const [editFormData, setEditFormData] = useState<EditCouponData>({
     discount_percent: 25,
     type: 'PERMANENT_25',
     sale_price_cents: undefined,
@@ -65,8 +80,13 @@ export default function DiscountCouponsPage() {
   })
 
   useEffect(() => {
+    if (status === 'loading') return
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+      router.push('/admin/login')
+      return
+    }
     fetchCoupons()
-  }, [pagination.page, filters])
+  }, [session, status, pagination.page, filters])
 
   const fetchCoupons = async () => {
     try {
@@ -101,9 +121,9 @@ export default function DiscountCouponsPage() {
     try {
       // Preparar dados com formato correto de datas
       const dataToSend = {
-        ...formData,
-        valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : undefined,
-        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : undefined
+        ...editFormData,
+        valid_from: editFormData.valid_from ? new Date(editFormData.valid_from).toISOString() : undefined,
+        valid_until: editFormData.valid_until ? new Date(editFormData.valid_until).toISOString() : undefined
       }
 
       // Remover campos undefined
@@ -122,15 +142,15 @@ export default function DiscountCouponsPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('Cupom criado com sucesso!')
+        toast.success('Cartão criado com sucesso!')
         setShowCreateModal(false)
         resetForm()
         fetchCoupons()
       } else {
-        toast.error(data.error || 'Erro ao criar cupom')
+        toast.error(data.error || 'Erro ao criar cartão')
       }
     } catch (error) {
-      toast.error('Erro ao criar cupom')
+      toast.error('Erro ao criar cartão')
       console.error(error)
     }
   }
@@ -140,11 +160,11 @@ export default function DiscountCouponsPage() {
     if (!selectedCoupon) return
 
     try {
-      // Preparar dados com formato correto de datas
+      // Preparar dados com formato correto de datas (código não é editável)
       const dataToSend = {
-        ...formData,
-        valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : undefined,
-        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : undefined
+        ...editFormData,
+        valid_from: editFormData.valid_from ? new Date(editFormData.valid_from).toISOString() : undefined,
+        valid_until: editFormData.valid_until ? new Date(editFormData.valid_until).toISOString() : undefined
       }
 
       // Remover campos undefined
@@ -154,8 +174,6 @@ export default function DiscountCouponsPage() {
         }
       })
 
-      console.log('Dados sendo enviados:', dataToSend)
-      
       const response = await fetch(`/api/admin/discount-coupons/${selectedCoupon.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -163,26 +181,24 @@ export default function DiscountCouponsPage() {
       })
 
       const data = await response.json()
-      console.log('Resposta da API:', { status: response.status, data })
 
       if (response.ok) {
-        toast.success('Cupom atualizado com sucesso!')
+        toast.success('Cartão atualizado com sucesso!')
         setShowEditModal(false)
         setSelectedCoupon(null)
         resetForm()
         fetchCoupons()
       } else {
-        console.error('Erro de validação:', data)
-        toast.error(data.error || 'Erro ao atualizar cupom')
+        toast.error(data.error || 'Erro ao atualizar cartão')
       }
     } catch (error) {
-      toast.error('Erro ao atualizar cupom')
+      toast.error('Erro ao atualizar cartão')
       console.error('Erro na requisição:', error)
     }
   }
 
   const handleDeleteCoupon = async (coupon: DiscountCoupon) => {
-    if (!confirm(`Tem certeza que deseja deletar o cupom ${coupon.code}?`)) return
+    if (!confirm(`Tem certeza que deseja deletar o cartão ${coupon.code}?`)) return
 
     try {
       const response = await fetch(`/api/admin/discount-coupons/${coupon.id}`, {
@@ -192,20 +208,28 @@ export default function DiscountCouponsPage() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success('Cupom deletado com sucesso!')
+        toast.success('Cartão deletado com sucesso!')
         fetchCoupons()
       } else {
-        toast.error(data.error || 'Erro ao deletar cupom')
+        toast.error(data.error || 'Erro ao deletar cartão')
       }
     } catch (error) {
-      toast.error('Erro ao deletar cupom')
+      toast.error('Erro ao deletar cartão')
       console.error(error)
     }
   }
 
   const resetForm = () => {
     setFormData({
-      code: '',
+      discount_percent: 25,
+      type: 'PERMANENT_25',
+      sale_price_cents: undefined,
+      is_active: true,
+      valid_from: '',
+      valid_until: '',
+      max_uses: undefined
+    })
+    setEditFormData({
       discount_percent: 25,
       type: 'PERMANENT_25',
       sale_price_cents: undefined,
@@ -218,14 +242,39 @@ export default function DiscountCouponsPage() {
 
   const openEditModal = (coupon: DiscountCoupon) => {
     setSelectedCoupon(coupon)
-    setFormData({
-      code: coupon.code,
+    
+    // Para cupons especiais, definir datas padrão se não existirem
+    let validFrom = ''
+    let validUntil = ''
+    
+    if (coupon.type === 'SPECIAL_50') {
+      if (coupon.valid_from) {
+        validFrom = new Date(coupon.valid_from).toISOString().slice(0, 16)
+      } else {
+        // Data padrão: hoje
+        validFrom = new Date().toISOString().slice(0, 16)
+      }
+      
+      if (coupon.valid_until) {
+        validUntil = new Date(coupon.valid_until).toISOString().slice(0, 16)
+      } else {
+        // Data padrão: 7 dias a partir de hoje
+        const defaultEndDate = new Date()
+        defaultEndDate.setDate(defaultEndDate.getDate() + 7)
+        validUntil = defaultEndDate.toISOString().slice(0, 16)
+      }
+    } else {
+      validFrom = coupon.valid_from ? new Date(coupon.valid_from).toISOString().slice(0, 16) : ''
+      validUntil = coupon.valid_until ? new Date(coupon.valid_until).toISOString().slice(0, 16) : ''
+    }
+    
+    setEditFormData({
       discount_percent: coupon.discount_percent,
       type: coupon.type,
       sale_price_cents: coupon.sale_price_cents || undefined,
       is_active: coupon.is_active,
-      valid_from: coupon.valid_from ? new Date(coupon.valid_from).toISOString().slice(0, 16) : '',
-      valid_until: coupon.valid_until ? new Date(coupon.valid_until).toISOString().slice(0, 16) : '',
+      valid_from: validFrom,
+      valid_until: validUntil,
       max_uses: coupon.max_uses || undefined
     })
     setShowEditModal(true)
@@ -250,20 +299,34 @@ export default function DiscountCouponsPage() {
       : <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">50% Especial</span>
   }
 
+  // Loading de autenticação
+  if (status === 'loading') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
+      </div>
+    )
+  }
+
+  // Não autenticado
+  if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+    return null // O useEffect já fez o redirect
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cupons de Desconto</h1>
-          <p className="text-gray-600">Gerencie cupons de 25% e 50% de desconto</p>
+          <h1 className="text-2xl font-bold text-gray-900">Cartões de Desconto</h1>
+          <p className="text-gray-600">Gerencie cartões de 25% e 50% de desconto</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
           className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-brand-primary/90 flex items-center gap-2"
         >
           <PlusIcon className="w-5 h-5" />
-          Novo Cupom
+          Novo Cartão
         </button>
       </div>
 
@@ -274,7 +337,7 @@ export default function DiscountCouponsPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
             <input
               type="text"
-              placeholder="Código do cupom..."
+              placeholder="Código do cartão..."
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
@@ -359,7 +422,11 @@ export default function DiscountCouponsPage() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {coupons.map((coupon) => (
-                    <tr key={coupon.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={coupon.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => openEditModal(coupon)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{coupon.code}</div>
                       </td>
@@ -397,13 +464,19 @@ export default function DiscountCouponsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={() => openEditModal(coupon)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              openEditModal(coupon)
+                            }}
                             className="text-blue-600 hover:text-blue-900"
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteCoupon(coupon)}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteCoupon(coupon)
+                            }}
                             className="text-red-600 hover:text-red-900"
                             disabled={coupon.uses_count > 0}
                           >
@@ -482,32 +555,20 @@ export default function DiscountCouponsPage() {
         )}
       </div>
 
-      {/* Modal Criar Cupom */}
+      {/* Modal Criar Cartão */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Criar Novo Cupom</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Criar Novo Cartão</h3>
               <form onSubmit={handleCreateCoupon} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    placeholder="Ex: DESCONTO25"
-                  />
-                </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                   <select
-                    value={formData.type}
+                    value={editFormData.type}
                     onChange={(e) => {
                       const type = e.target.value as 'PERMANENT_25' | 'SPECIAL_50'
-                      setFormData(prev => ({ 
+                      setEditFormData(prev => ({ 
                         ...prev, 
                         type,
                         discount_percent: type === 'PERMANENT_25' ? 25 : 50
@@ -526,10 +587,10 @@ export default function DiscountCouponsPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.sale_price_cents ? (formData.sale_price_cents / 100).toFixed(2) : ''}
+                    value={editFormData.sale_price_cents ? (editFormData.sale_price_cents / 100).toFixed(2) : ''}
                     onChange={(e) => {
                       const value = e.target.value
-                      setFormData(prev => ({ 
+                      setEditFormData(prev => ({ 
                         ...prev, 
                         sale_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined
                       }))
@@ -539,15 +600,15 @@ export default function DiscountCouponsPage() {
                   />
                 </div>
 
-                {formData.type === 'SPECIAL_50' && (
+                {editFormData.type === 'SPECIAL_50' && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
                       <input
                         type="datetime-local"
                         required
-                        value={formData.valid_from}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valid_from: e.target.value }))}
+                        value={editFormData.valid_from}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_from: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -557,8 +618,8 @@ export default function DiscountCouponsPage() {
                       <input
                         type="datetime-local"
                         required
-                        value={formData.valid_until}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
+                        value={editFormData.valid_until}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_until: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -586,7 +647,7 @@ export default function DiscountCouponsPage() {
                     className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
                   />
                   <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
-                    Cupom ativo
+                    Cartão ativo
                   </label>
                 </div>
 
@@ -605,7 +666,7 @@ export default function DiscountCouponsPage() {
                     type="submit"
                     className="px-4 py-2 bg-brand-primary text-white rounded-md hover:bg-brand-primary/90"
                   >
-                    Criar Cupom
+                    Criar Cartão
                   </button>
                 </div>
               </form>
@@ -614,31 +675,22 @@ export default function DiscountCouponsPage() {
         </div>
       )}
 
-      {/* Modal Editar Cupom */}
+      {/* Modal Editar Cartão */}
       {showEditModal && selectedCoupon && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Cupom</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Editar Cartão</h3>
               <form onSubmit={handleUpdateCoupon} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Código</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                  />
-                </div>
+
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
                   <select
-                    value={formData.type}
+                    value={editFormData.type}
                     onChange={(e) => {
                       const type = e.target.value as 'PERMANENT_25' | 'SPECIAL_50'
-                      setFormData(prev => ({ 
+                      setEditFormData(prev => ({ 
                         ...prev, 
                         type,
                         discount_percent: type === 'PERMANENT_25' ? 25 : 50
@@ -657,10 +709,10 @@ export default function DiscountCouponsPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.sale_price_cents ? (formData.sale_price_cents / 100).toFixed(2) : ''}
+                    value={editFormData.sale_price_cents ? (editFormData.sale_price_cents / 100).toFixed(2) : ''}
                     onChange={(e) => {
                       const value = e.target.value
-                      setFormData(prev => ({ 
+                      setEditFormData(prev => ({ 
                         ...prev, 
                         sale_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined
                       }))
@@ -670,15 +722,15 @@ export default function DiscountCouponsPage() {
                   />
                 </div>
 
-                {formData.type === 'SPECIAL_50' && (
+                {editFormData.type === 'SPECIAL_50' && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
                       <input
                         type="datetime-local"
                         required
-                        value={formData.valid_from}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valid_from: e.target.value }))}
+                        value={editFormData.valid_from}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_from: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -688,8 +740,8 @@ export default function DiscountCouponsPage() {
                       <input
                         type="datetime-local"
                         required
-                        value={formData.valid_until}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
+                        value={editFormData.valid_until}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_until: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -701,8 +753,8 @@ export default function DiscountCouponsPage() {
                   <input
                     type="number"
                     min="1"
-                    value={formData.max_uses || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, max_uses: e.target.value ? parseInt(e.target.value) : undefined }))}
+                    value={editFormData.max_uses || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, max_uses: e.target.value ? parseInt(e.target.value) : undefined }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                     placeholder="Deixe vazio para ilimitado"
                   />
@@ -712,12 +764,12 @@ export default function DiscountCouponsPage() {
                   <input
                     type="checkbox"
                     id="edit_is_active"
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                    checked={editFormData.is_active}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, is_active: e.target.checked }))}
                     className="h-4 w-4 text-brand-primary focus:ring-brand-primary border-gray-300 rounded"
                   />
                   <label htmlFor="edit_is_active" className="ml-2 block text-sm text-gray-900">
-                    Cupom ativo
+                    Cartão ativo
                   </label>
                 </div>
 

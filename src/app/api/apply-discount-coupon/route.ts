@@ -5,7 +5,7 @@ import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
 const applyCouponSchema = z.object({
-  code: z.string().min(1, 'Código do cupom é obrigatório'),
+  code: z.string().min(1, 'Código do cartão é obrigatório'),
   order_id: z.string().min(1, 'ID do pedido é obrigatório')
 })
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Verificar se já existe um desconto aplicado neste pedido
     if (order.discount_cents > 0) {
       return NextResponse.json(
-        { error: 'Já existe um cupom aplicado neste pedido' },
+        { error: 'Já existe um cartão aplicado neste pedido' },
         { status: 400 }
       )
     }
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     if (!coupon) {
       return NextResponse.json(
-        { error: 'Cupom não encontrado ou já foi usado' },
+        { error: 'Cartão não encontrado ou já foi usado' },
         { status: 400 }
       )
     }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o cupom está disponível
     if (coupon.status !== 'AVAILABLE') {
       return NextResponse.json(
-        { error: 'Cupom não está disponível' },
+        { error: 'Cartão não está disponível' },
         { status: 400 }
       )
     }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     const now = new Date()
     if (coupon.expires_at && now > coupon.expires_at) {
       return NextResponse.json(
-        { error: 'Cupom expirado' },
+        { error: 'Cartão expirado' },
         { status: 400 }
       )
     }
@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Cupom aplicado com sucesso',
+      message: 'Cartão aplicado com sucesso',
       coupon: {
         code: coupon.code,
         face_value_cents: coupon.face_value_cents

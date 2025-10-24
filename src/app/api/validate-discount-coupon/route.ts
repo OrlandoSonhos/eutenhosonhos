@@ -5,7 +5,7 @@ import { prismaWithRetry } from '@/lib/prisma-utils'
 import { z } from 'zod'
 
 const validateCouponSchema = z.object({
-  code: z.string().min(1, 'Código do cupom é obrigatório'),
+  code: z.string().min(1, 'Código do cartão é obrigatório'),
   total_cents: z.number().min(1, 'Total do pedido deve ser maior que zero')
 })
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cupom não encontrado ou já utilizado' 
+          error: 'Cartão não encontrado ou já utilizado' 
         },
         { status: 400 }
       )
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cupom inativo' 
+          error: 'Cartão inativo' 
         },
         { status: 400 }
       )
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cupom expirado' 
+          error: 'Cartão expirado' 
         },
         { status: 400 }
       )
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cupom ainda não está válido' 
+          error: 'Cartão ainda não está válido' 
         },
         { status: 400 }
       )
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cupom expirado' 
+          error: 'Cartão expirado' 
         },
         { status: 400 }
       )

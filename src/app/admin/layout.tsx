@@ -22,7 +22,7 @@ const navigation = [
   { name: 'Produtos', href: '/admin/produtos', icon: CubeIcon },
   { name: 'Categorias', href: '/admin/categorias', icon: TagIcon },
   { name: 'Cartões', href: '/admin/cupons', icon: TicketIcon },
-  { name: 'Cupons Desconto', href: '/admin/cupons-desconto', icon: TicketIcon },
+  { name: 'Cartões Desconto', href: '/admin/cupons-desconto', icon: TicketIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingBagIcon },
   { name: 'Usuários', href: '/admin/usuarios', icon: UsersIcon },
 ]

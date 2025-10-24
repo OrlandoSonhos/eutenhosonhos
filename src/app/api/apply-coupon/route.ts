@@ -5,7 +5,7 @@ import { validateCoupon } from '@/lib/coupons'
 import { z } from 'zod'
 
 const applyCouponSchema = z.object({
-  code: z.string().min(1, 'Código do cupom é obrigatório'),
+  code: z.string().min(1, 'Código do cartão é obrigatório'),
   orderId: z.string().optional()
 })
 

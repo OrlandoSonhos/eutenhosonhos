@@ -99,6 +99,7 @@ export async function PUT(
     }
 
     const body = await request.json()
+    
     const validatedData = updateDiscountCouponSchema.parse(body)
 
     // Verificar se o cupom existe

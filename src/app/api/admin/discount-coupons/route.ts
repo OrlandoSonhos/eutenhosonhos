@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
         orderBy: { created_at: 'desc' },
         include: {
           _count: {
-            select: { uses: true }
+            select: { purchases: true }
           }
         }
       }),
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       coupons: (coupons as any[]).map((coupon: any) => ({
         ...coupon,
-        uses_count: coupon._count.uses,
+        uses_count: coupon._count.purchases,
         is_expired: coupon.valid_until ? new Date() > coupon.valid_until : false,
         is_not_started: coupon.valid_from ? new Date() < coupon.valid_from : false
       })),

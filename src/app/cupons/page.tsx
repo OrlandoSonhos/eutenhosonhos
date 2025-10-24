@@ -133,7 +133,7 @@ export default function DiscountCardsPage() {
                   <div className="relative overflow-hidden">
                     <img 
                       src="/uploads/50_.png" 
-                      alt="Cupom de 50% de desconto"
+                      alt="Cartão de 50% de desconto"
                       className="w-full h-52 object-cover rounded-t-xl"
                     />
                   </div>
@@ -141,7 +141,7 @@ export default function DiscountCardsPage() {
                   <div className="relative overflow-hidden">
                     <img 
                       src="/uploads/25_.png" 
-                      alt="Cupom de 25% de desconto"
+                      alt="Cartão de 25% de desconto"
                       className="w-full h-52 object-cover rounded-t-xl"
                     />
                   </div>

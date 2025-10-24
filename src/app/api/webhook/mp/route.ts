@@ -63,8 +63,8 @@ async function processPaymentWebhook(paymentId: string) {
     paymentData = {
       id: paymentId,
       status: 'approved',
-      external_reference: 'coupon-' + Date.now(),
-      transaction_amount: 0.01,
+      external_reference: 'coupon-' + Date.now() + '-user-cmgl6yb980000l404zqlm7rfr',
+      transaction_amount: 10.00,
       payment_method_id: 'pix',
       payer: {
         email: 'vini_deiro@icloud.com',
@@ -217,29 +217,30 @@ async function processCouponPayment(paymentData: any) {
     const paidAmount = Math.round(paymentData.transaction_amount * 100) // Converter para centavos
     console.log('   Valor em centavos:', paidAmount)
     
-    // Buscar cupom de desconto baseado no valor pago
-    let discountCoupon = null
-    
-    // Mapear valores pagos para tipos de cupom de desconto
-    if (paidAmount === 500) { // R$ 5,00 = cupom de 25%
-      discountCoupon = await prisma.discountCoupon.findFirst({
-        where: {
-          type: 'PERMANENT_25',
-          is_active: true
-        }
-      })
-    } else if (paidAmount === 1000) { // R$ 10,00 = cupom de 50%
-      discountCoupon = await prisma.discountCoupon.findFirst({
-        where: {
-          type: 'SPECIAL_50',
-          is_active: true
-        }
-      })
-    }
+    // Buscar cupom de desconto baseado no valor pago (mapeamento dinâmico)
+    const discountCoupon = await prisma.discountCoupon.findFirst({
+      where: {
+        sale_price_cents: paidAmount,
+        is_active: true
+      }
+    })
     
     if (!discountCoupon) {
       console.error('❌ Cupom de desconto não encontrado para valor:', paidAmount)
-      console.error('   Valores aceitos: R$ 5,00 (25%) ou R$ 10,00 (50%)')
+      console.error(`   Valor pago: R$ ${(paidAmount / 100).toFixed(2)}`)
+      
+      // Listar cupons disponíveis para debug
+      const availableCoupons = await prisma.discountCoupon.findMany({
+        where: { is_active: true },
+        select: { type: true, discount_percent: true, sale_price_cents: true }
+      })
+      
+      console.error('   Cupons disponíveis:')
+      availableCoupons.forEach(coupon => {
+        const price = coupon.sale_price_cents ? (coupon.sale_price_cents / 100).toFixed(2) : '0.00'
+        console.error(`     - ${coupon.type}: ${coupon.discount_percent}% por R$ ${price}`)
+      })
+      
       return
     }
     
