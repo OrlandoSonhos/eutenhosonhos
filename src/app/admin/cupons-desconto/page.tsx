@@ -35,7 +35,7 @@ interface CreateCouponData {
 }
 
 interface EditCouponData extends CreateCouponData {
-  // Código não é editável, é gerado automaticamente
+  code: string // Código não é editável, é gerado automaticamente
 }
 
 export default function DiscountCouponsPage() {
@@ -56,6 +56,7 @@ export default function DiscountCouponsPage() {
     max_uses: undefined
   })
   const [editFormData, setEditFormData] = useState<EditCouponData>({
+    code: '',
     discount_percent: 25,
     type: 'PERMANENT_25',
     sale_price_cents: undefined,
@@ -230,6 +231,7 @@ export default function DiscountCouponsPage() {
       max_uses: undefined
     })
     setEditFormData({
+      code: '',
       discount_percent: 25,
       type: 'PERMANENT_25',
       sale_price_cents: undefined,
@@ -269,6 +271,7 @@ export default function DiscountCouponsPage() {
     }
     
     setEditFormData({
+      code: coupon.code,
       discount_percent: coupon.discount_percent,
       type: coupon.type,
       sale_price_cents: coupon.sale_price_cents || undefined,

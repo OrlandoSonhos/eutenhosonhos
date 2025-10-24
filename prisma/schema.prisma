@@ -185,6 +185,11 @@ enum PaymentMethod {
   DEBIT_CARD
 }
 
+enum DiscountCouponType {
+  PERMANENT_25
+  SPECIAL_50
+}
+
 model Coupon {
   id                String       @id @default(cuid())
   code              String       @unique
@@ -234,13 +239,13 @@ model PasswordReset {
 }
 
 model DiscountCoupon {
-  id                String    @id @default(cuid())
-  type              String    // PERMANENT_25, SPECIAL_50, etc.
-  discount_percent  Int       // 25, 50, etc.
-  is_active         Boolean   @default(true)
-  sale_price_cents  Int?      // Preço de venda em centavos
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
+  id                String              @id @default(cuid())
+  type              DiscountCouponType  // PERMANENT_25, SPECIAL_50, etc.
+  discount_percent  Int                 // 25, 50, etc.
+  is_active         Boolean             @default(true)
+  sale_price_cents  Int?                // Preço de venda em centavos
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
 
   // Relations
   purchases DiscountCouponPurchase[]

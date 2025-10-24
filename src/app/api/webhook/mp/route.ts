@@ -237,7 +237,7 @@ async function processCouponPayment(paymentData: any) {
       
       console.error('   Cupons disponíveis:')
       availableCoupons.forEach(coupon => {
-        const price = coupon.sale_price_cents ? (coupon.sale_price_cents / 100).toFixed(2) : '0.00'
+        const price = coupon.sale_price_cents ? (coupon.sale_price_cents / 100).toFixed(2) : 'N/A'
         console.error(`     - ${coupon.type}: ${coupon.discount_percent}% por R$ ${price}`)
       })
       
