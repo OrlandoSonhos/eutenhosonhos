@@ -160,6 +160,10 @@ export async function POST(request: NextRequest) {
       // Para cupons de valor, o desconto é o valor facial do cupom
       discountCents = coupon.face_value_cents
       finalCents = Math.max(0, orderData.total - discountCents)
+    } else if (orderData.discount > 0) {
+      // Se não há cupom regular mas há desconto calculado no frontend, usar esse desconto
+      discountCents = orderData.discount
+      finalCents = Math.max(0, orderData.total)
     }
 
     // Criar o pedido no banco de dados
@@ -202,6 +206,9 @@ export async function POST(request: NextRequest) {
 
     // Aplicar cupom de desconto se fornecido
     let finalDiscountCents = 0
+    console.log('🎫 Cupom recebido:', orderData.discountCouponCode);
+    console.log('💰 Valores recebidos do frontend:', { subtotal: orderData.subtotal, shipping: orderData.shipping, discount: orderData.discount, total: orderData.total });
+    
     if (discountCoupon && orderData.discountCouponCode) {
       try {
         const response = await fetch(`${process.env.NEXTAUTH_URL}/api/apply-discount-coupon`, {
@@ -219,6 +226,7 @@ export async function POST(request: NextRequest) {
         if (response.ok) {
           const discountResult = await response.json()
           finalDiscountCents = discountResult.discount_cents || 0
+          console.log('✅ Cupom validado - desconto:', discountResult.discount, 'finalDiscountCents:', finalDiscountCents);
         } else {
           console.error('Erro ao aplicar cupom de desconto:', await response.text())
         }
@@ -227,14 +235,29 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Calcular o desconto total (cupons de valor + cupons de desconto)
+    const totalDiscountCents = discountCents + finalDiscountCents
+    console.log('🧮 Cálculo de desconto:', {
+      discountCents,
+      finalDiscountCents,
+      totalDiscountCents
+    });
+
     // Calcular itens com desconto aplicado para o Mercado Pago
     const itemsForMP = orderData.items.map(item => {
-      // Calcular proporção do desconto para este item
+      // Calcular proporção do desconto total para este item
       const itemTotal = item.price_cents * item.quantity
       const subtotalCents = orderData.items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0)
       const itemDiscountProportion = subtotalCents > 0 ? itemTotal / subtotalCents : 0
-      const itemDiscount = Math.round(finalDiscountCents * itemDiscountProportion)
+      const itemDiscount = Math.round(totalDiscountCents * itemDiscountProportion)
       const finalItemPrice = Math.max(1, item.price_cents - Math.round(itemDiscount / item.quantity)) // Mínimo de 1 centavo
+
+      console.log(`📦 Item ${item.id}:`, {
+        originalPrice: item.price_cents,
+        itemDiscountProportion,
+        itemDiscount,
+        finalItemPrice
+      });
 
       return {
         id: item.id,
@@ -245,6 +268,12 @@ export async function POST(request: NextRequest) {
     })
 
     // Criar preferência no Mercado Pago com valores já com desconto aplicado
+    console.log('🚀 Enviando para Mercado Pago:', {
+      items: itemsForMP,
+      shippingCents: orderData.selectedShipping?.price_cents || orderData.shipping,
+      totalValue: itemsForMP.reduce((sum, item) => sum + (item.price_cents * item.quantity), 0) + (orderData.selectedShipping?.price_cents || orderData.shipping)
+    });
+    
     const preference = await createOrderPreference(
       itemsForMP,
       (session as any).user.email,

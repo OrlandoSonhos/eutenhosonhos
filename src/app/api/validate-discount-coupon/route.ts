@@ -26,16 +26,35 @@ export async function POST(request: NextRequest) {
     const userId = (session as any).user.id
 
     // Buscar cupons comprados pelo usuário
-    const couponPurchases = await (prismaWithRetry as any).discountCouponPurchase.findMany({
+    const couponPurchases = await prismaWithRetry.discountCouponPurchase.findMany({
       where: { 
         buyer_id: userId,
         code: code.toUpperCase(),
-        is_used: false
+        used_at: null // Cupom não usado
       },
       include: {
         discount_coupon: true
       }
-    })
+    }) as Array<{
+      id: string;
+      buyer_id: string;
+      discount_coupon_id: string;
+      order_id: string | null;
+      code: string;
+      expires_at: Date | null;
+      used_at: Date | null;
+      created_at: Date;
+      discount_coupon: {
+        id: string;
+        type: string;
+        discount_percent: number;
+        is_active: boolean;
+        sale_price_cents: number;
+        created_at: Date;
+        valid_from: Date | null;
+        valid_until: Date | null;
+      };
+    }>
 
     if (couponPurchases.length === 0) {
       return NextResponse.json(
@@ -103,7 +122,7 @@ export async function POST(request: NextRequest) {
       valid: true,
       coupon: {
         id: coupon.id,
-        code: coupon.code,
+        code: couponPurchase.code,
         discount_percent: coupon.discount_percent,
         type: coupon.type
       },

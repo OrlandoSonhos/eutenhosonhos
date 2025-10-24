@@ -316,6 +316,16 @@ export default function CheckoutPage() {
         selectedShipping: selectedShipping
       }
 
+      console.log('🛒 Frontend - Dados enviados:', {
+        appliedCoupon,
+        appliedDiscountCoupon,
+        subtotal: getSubtotal(),
+        shipping: getShipping(),
+        discount: getDiscount(),
+        total: getTotal(),
+        orderData
+      });
+
       const response = await fetch('/api/orders/create', {
         method: 'POST',
         headers: {
