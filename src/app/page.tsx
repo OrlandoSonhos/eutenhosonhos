@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { Search, ShoppingCart, Filter, X } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { ProductCarousel } from '@/components/ui/product-carousel'
 
 interface Product {
   id: string
@@ -336,39 +337,27 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
               {products.map((product) => (
                 <div key={product.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                  <Link href={`/produtos/${product.id}`}>
-                    <div className="relative">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.title}
-                          className="w-full h-48 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                          <img
-                            src="/placeholder-product.svg"
-                            alt="Imagem do produto"
-                            className="w-16 h-16 text-gray-400"
-                          />
-                        </div>
-                      )}
-                      {product.stock <= 5 && product.stock > 0 && (
-                        <div className="absolute top-2 right-2 bg-warning text-white px-2 py-1 rounded text-xs font-medium">
-                Últimas unidades
-              </div>
-            )}
-            {product.stock === 0 && (
-              <div className="absolute top-2 right-2 bg-error text-white px-2 py-1 rounded text-xs font-medium">
-                          Esgotado
-                        </div>
-                      )}
-                    </div>
-                  </Link>
+                  <div className="relative">
+                    <ProductCarousel
+                      images={product.images && product.images.length > 0 ? product.images : []}
+                      productTitle={product.title}
+                      className="h-48"
+                    />
+                    {product.stock <= 5 && product.stock > 0 && (
+                      <div className="absolute top-2 right-2 bg-warning text-white px-2 py-1 rounded text-xs font-medium z-10">
+                        Últimas unidades
+                      </div>
+                    )}
+                    {product.stock === 0 && (
+                      <div className="absolute top-2 right-2 bg-error text-white px-2 py-1 rounded text-xs font-medium z-10">
+                        Esgotado
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="p-4">
                     <Link href={`/produtos/${product.id}`}>
-                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-brand-primary transition-colors">
+                      <h3 className="font-semibold text-gray-900 mb-2 hover:text-brand-primary transition-colors line-clamp-2 leading-tight min-h-[3.5rem]">
                         {product.title}
                       </h3>
                     </Link>

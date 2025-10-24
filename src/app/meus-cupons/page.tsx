@@ -15,6 +15,10 @@ interface Coupon {
   expires_at: string
   used_at?: string
   created_at: string
+  // Campos para cupons percentuais
+  discount_percent?: number
+  is_percentual?: boolean
+  type?: string
 }
 
 export default function MyDiscountCardsPage() {
@@ -47,14 +51,28 @@ export default function MyDiscountCardsPage() {
     }
   }
 
-  const copyToClipboard = async (code: string) => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(code)
-      setCopiedCode(code)
+      await navigator.clipboard.writeText(text)
+      setCopiedCode(text)
       setTimeout(() => setCopiedCode(null), 2000)
     } catch (error) {
-      console.error('Erro ao copiar código:', error)
+      console.error('Erro ao copiar:', error)
     }
+  }
+
+  const calculateDiscount = (coupon: Coupon) => {
+    // Se for cupom percentual, retorna o desconto direto
+    if (coupon.is_percentual && coupon.discount_percent) {
+      return coupon.discount_percent
+    }
+    
+    // Para cupons de valor fixo (antigos)
+    const faceValue = coupon.face_value_cents
+    const salePrice = coupon.sale_price_cents
+    
+    if (faceValue === 0 || salePrice === 0) return 0
+    return Math.round(((faceValue - salePrice) / faceValue) * 100)
   }
 
   const getStatusInfo = (status: string) => {
@@ -159,17 +177,40 @@ export default function MyDiscountCardsPage() {
               const statusInfo = getStatusInfo(coupon.status)
               const StatusIcon = statusInfo.icon
               const isExpired = new Date(coupon.expires_at) < new Date()
+              const discount = calculateDiscount(coupon)
 
               return (
                 <div
                   key={coupon.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow relative overflow-hidden"
                 >
+                  {/* Imagem de fundo para cartões especiais */}
+                  {((coupon.is_percentual && coupon.discount_percent === 50) || coupon.face_value_cents === 5000) && (
+                    <div className="absolute top-2 right-2 w-20 h-20 opacity-70">
+                      <img 
+                        src="/uploads/50_.png" 
+                        alt="Cartão de 50% de desconto"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  {((coupon.is_percentual && coupon.discount_percent === 25) || coupon.face_value_cents === 2500) && (
+                    <div className="absolute top-2 right-2 w-20 h-20 opacity-70">
+                      <img 
+                        src="/uploads/25_.png" 
+                        alt="Cartão de 25% de desconto"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                     <div className="flex-1">
                       <div className="flex items-center mb-3">
                         <div className="text-2xl font-bold text-brand-primary mr-4">
-                          {formatCurrency(coupon.face_value_cents)}
+                          {coupon.is_percentual 
+                            ? `${coupon.discount_percent}% de desconto`
+                            : formatCurrency(coupon.face_value_cents)
+                          }
                         </div>
                         <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
                           <StatusIcon className="w-4 h-4 mr-1" />

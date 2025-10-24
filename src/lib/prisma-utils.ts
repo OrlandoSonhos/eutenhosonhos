@@ -122,6 +122,16 @@ export const prismaWithRetry = {
     delete: (args: any) => executeWithRetry(() => prisma.session.delete(args))
   },
 
+  discountCoupon: {
+    count: (args?: any) => executeWithRetry(() => prisma.discountCoupon.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.discountCoupon.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.discountCoupon.findFirst(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.discountCoupon.findUnique(args)),
+    create: (args: any) => executeWithRetry(() => prisma.discountCoupon.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.discountCoupon.update(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.discountCoupon.delete(args))
+  },
+
   orderItem: {
     count: (args?: any) => executeWithRetry(() => prisma.orderItem.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.orderItem.findMany(args)),
@@ -131,6 +141,17 @@ export const prismaWithRetry = {
     aggregate: (args: any) => executeWithRetry(() => prisma.orderItem.aggregate(args)),
     delete: (args: any) => executeWithRetry(() => prisma.orderItem.delete(args)),
     deleteMany: (args?: any) => executeWithRetry(() => prisma.orderItem.deleteMany(args))
+  },
+
+  passwordReset: {
+    count: (args?: any) => executeWithRetry(() => prisma.passwordReset.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.passwordReset.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.passwordReset.findFirst(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.passwordReset.findUnique(args)),
+    create: (args: any) => executeWithRetry(() => prisma.passwordReset.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.passwordReset.update(args)),
+    updateMany: (args: any) => executeWithRetry(() => prisma.passwordReset.updateMany(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.passwordReset.delete(args))
   },
 
   $transaction: prisma.$transaction.bind(prisma),

@@ -1,0 +1,240 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth/next'
+import { authOptions } from '@/lib/auth'
+import { prismaWithRetry } from '@/lib/prisma-utils'
+import { z } from 'zod'
+
+const updateDiscountCouponSchema = z.object({
+  code: z.string().min(3, 'Código deve ter pelo menos 3 caracteres').max(20, 'Código deve ter no máximo 20 caracteres').optional(),
+  discount_percent: z.number().min(1).max(100, 'Desconto deve estar entre 1% e 100%').optional(),
+  type: z.enum(['PERMANENT_25', 'SPECIAL_50']).optional(),
+  sale_price_cents: z.number().min(0).optional(),
+  is_active: z.boolean().optional(),
+  valid_from: z.string().datetime().optional(),
+  valid_until: z.string().datetime().optional(),
+  max_uses: z.number().min(1).optional()
+})
+
+// GET - Obter cupom específico
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Acesso negado' },
+        { status: 403 }
+      )
+    }
+
+    const coupon = await prismaWithRetry.discountCoupon.findUnique({
+      where: { id },
+      include: {
+        uses: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            order: {
+              select: {
+                id: true,
+                total_cents: true,
+                created_at: true
+              }
+            }
+          },
+          orderBy: { used_at: 'desc' }
+        },
+        _count: {
+          select: { uses: true }
+        }
+      }
+    })
+
+    if (!coupon) {
+      return NextResponse.json(
+        { error: 'Cupom não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      ...(coupon as any),
+      uses_count: (coupon as any)._count?.uses || 0,
+      is_expired: (coupon as any).valid_until ? new Date() > (coupon as any).valid_until : false,
+      is_not_started: (coupon as any).valid_from ? new Date() < (coupon as any).valid_from : false
+    })
+
+  } catch (error) {
+    console.error('Erro ao obter cupom:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}
+
+// PUT - Atualizar cupom
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Acesso negado' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const validatedData = updateDiscountCouponSchema.parse(body)
+
+    // Verificar se o cupom existe
+    const existingCoupon = await prismaWithRetry.discountCoupon.findUnique({
+      where: { id }
+    })
+
+    if (!existingCoupon) {
+      return NextResponse.json(
+        { error: 'Cupom não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Validações específicas por tipo
+    if (validatedData.type === 'PERMANENT_25' && validatedData.discount_percent && validatedData.discount_percent !== 25) {
+      return NextResponse.json(
+        { error: 'Cupons permanentes devem ter 25% de desconto' },
+        { status: 400 }
+      )
+    }
+
+    if (validatedData.type === 'SPECIAL_50' && validatedData.discount_percent && validatedData.discount_percent !== 50) {
+      return NextResponse.json(
+        { error: 'Cupons especiais devem ter 50% de desconto' },
+        { status: 400 }
+      )
+    }
+
+    // Se mudando para SPECIAL_50, verificar se tem datas
+    if (validatedData.type === 'SPECIAL_50') {
+      const finalValidFrom = validatedData.valid_from || (existingCoupon as any).valid_from
+      const finalValidUntil = validatedData.valid_until || (existingCoupon as any).valid_until
+      
+      if (!finalValidFrom || !finalValidUntil) {
+        return NextResponse.json(
+          { error: 'Cupons especiais devem ter data de início e fim definidas' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // Verificar se o código já existe (se estiver sendo alterado)
+    if (validatedData.code && validatedData.code.toUpperCase() !== (existingCoupon as any).code) {
+      const codeExists = await prismaWithRetry.discountCoupon.findUnique({
+        where: { code: validatedData.code.toUpperCase() }
+      })
+
+      if (codeExists) {
+        return NextResponse.json(
+          { error: 'Código de cupom já existe' },
+          { status: 400 }
+        )
+      }
+    }
+
+    const updatedCoupon = await prismaWithRetry.discountCoupon.update({
+      where: { id },
+      data: {
+        ...validatedData,
+        ...(validatedData.code && { code: validatedData.code.toUpperCase() }),
+        ...(validatedData.valid_from && { valid_from: new Date(validatedData.valid_from) }),
+        ...(validatedData.valid_until && { valid_until: new Date(validatedData.valid_until) })
+      }
+    })
+
+    return NextResponse.json(updatedCoupon)
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Dados inválidos', details: (error as any).errors },
+        { status: 400 }
+      )
+    }
+
+    console.error('Erro ao atualizar cupom:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE - Excluir cupom
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Acesso negado' },
+        { status: 403 }
+      )
+    }
+
+    // Verificar se o cupom existe
+    const existingCoupon = await prismaWithRetry.discountCoupon.findUnique({
+      where: { id },
+      include: {
+        _count: {
+          select: { uses: true }
+        }
+      }
+    })
+
+    if (!existingCoupon) {
+      return NextResponse.json(
+        { error: 'Cupom não encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar se o cupom já foi usado
+    if ((existingCoupon as any)._count.uses > 0) {
+      return NextResponse.json(
+        { error: 'Não é possível deletar cupom que já foi utilizado' },
+        { status: 400 }
+      )
+    }
+
+    await prismaWithRetry.discountCoupon.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({ message: 'Cupom deletado com sucesso' })
+
+  } catch (error) {
+    console.error('Erro ao deletar cupom:', error)
+    return NextResponse.json(
+      { error: 'Erro interno do servidor' },
+      { status: 500 }
+    )
+  }
+}

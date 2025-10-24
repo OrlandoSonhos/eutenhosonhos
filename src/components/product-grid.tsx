@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ShoppingCart, Star, Eye } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { ProductCarousel } from '@/components/ui/product-carousel'
 
 interface Product {
   id: string
@@ -59,41 +60,17 @@ export function ProductGrid() {
           key={product.id}
           className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border border-gray-100 group"
         >
-          <div className="relative w-full h-64 bg-gray-100 overflow-hidden">
-            {(() => {
-              try {
-                const images = JSON.parse(product.images) as string[]
-                const firstImage = images[0]
-                return firstImage ? (
-                  <Image
-                    src={firstImage}
-                    alt={product.title}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = '/placeholder-product.svg'
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-                    <div className="text-center">
-                      <Eye className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                      <span className="text-sm">Sem imagem</span>
-                    </div>
-                  </div>
-                )
-              } catch {
-                return (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-50">
-                    <div className="text-center">
-                      <Eye className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                      <span className="text-sm">Sem imagem</span>
-                    </div>
-                  </div>
-                )
-              }
-            })()}
+          <div className="relative">
+            <ProductCarousel
+              images={(() => {
+                try {
+                  return JSON.parse(product.images) as string[]
+                } catch {
+                  return []
+                }
+              })()}
+              productTitle={product.title}
+            />
             
             {/* Overlay com botões */}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -108,12 +85,12 @@ export function ProductGrid() {
 
             {/* Badge de estoque */}
             {product.stock <= 5 && product.stock > 0 && (
-              <div className="absolute top-3 left-3 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+              <div className="absolute top-3 left-3 bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
                 Últimas {product.stock} unidades
               </div>
             )}
             {product.stock === 0 && (
-              <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+              <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium z-10">
                 Esgotado
               </div>
             )}
@@ -129,7 +106,7 @@ export function ProductGrid() {
               <span className="text-sm text-gray-500 ml-2">(4.8)</span>
             </div>
             
-            <h3 className="font-bold text-gray-900 mb-3 text-lg group-hover:text-brand-primary transition-colors truncate">
+            <h3 className="font-bold text-gray-900 mb-3 text-lg group-hover:text-brand-primary transition-colors line-clamp-2 leading-tight min-h-[3.5rem]">
               {product.title}
             </h3>
             

@@ -16,6 +16,7 @@ const createOrderSchema = z.object({
     stock: z.number()
   })),
   couponCode: z.string().optional(),
+  discountCouponCode: z.string().optional(),
   subtotal: z.number(),
   shipping: z.number(),
   discount: z.number(),
@@ -116,6 +117,40 @@ export async function POST(request: NextRequest) {
       coupon = couponValidation.coupon
     }
 
+    // Validar cupom de desconto se fornecido
+    let discountCoupon = null
+    if (orderData.discountCouponCode) {
+      try {
+        const response = await fetch(`${process.env.NEXTAUTH_URL}/api/validate-discount-coupon`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(session as any).accessToken || 'internal'}`
+          },
+          body: JSON.stringify({
+            code: orderData.discountCouponCode,
+            total_amount: orderData.subtotal
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          return NextResponse.json(
+            { error: errorData.error || 'Cupom de desconto inválido' },
+            { status: 400 }
+          )
+        }
+
+        discountCoupon = await response.json()
+      } catch (error) {
+        console.error('Erro ao validar cupom de desconto:', error)
+        return NextResponse.json(
+          { error: 'Erro ao validar cupom de desconto' },
+          { status: 500 }
+        )
+      }
+    }
+
     // Calcular o valor final (inicialmente igual ao total, será atualizado se houver cupom)
     let finalCents = orderData.total
     let discountCents = 0
@@ -160,24 +195,63 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Criar preferência no Mercado Pago
-    const preference = await createOrderPreference(
-      orderData.items.map(item => ({
+    // Aplicar cupom se fornecido
+    if (coupon) {
+      await applyCoupon(coupon.code, order.id)
+    }
+
+    // Aplicar cupom de desconto se fornecido
+    let finalDiscountCents = 0
+    if (discountCoupon && orderData.discountCouponCode) {
+      try {
+        const response = await fetch(`${process.env.NEXTAUTH_URL}/api/apply-discount-coupon`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(session as any).accessToken || 'internal'}`
+          },
+          body: JSON.stringify({
+            code: orderData.discountCouponCode,
+            order_id: order.id
+          })
+        })
+
+        if (response.ok) {
+          const discountResult = await response.json()
+          finalDiscountCents = discountResult.discount_cents || 0
+        } else {
+          console.error('Erro ao aplicar cupom de desconto:', await response.text())
+        }
+      } catch (error) {
+        console.error('Erro ao aplicar cupom de desconto:', error)
+      }
+    }
+
+    // Calcular itens com desconto aplicado para o Mercado Pago
+    const itemsForMP = orderData.items.map(item => {
+      // Calcular proporção do desconto para este item
+      const itemTotal = item.price_cents * item.quantity
+      const subtotalCents = orderData.items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0)
+      const itemDiscountProportion = subtotalCents > 0 ? itemTotal / subtotalCents : 0
+      const itemDiscount = Math.round(finalDiscountCents * itemDiscountProportion)
+      const finalItemPrice = Math.max(1, item.price_cents - Math.round(itemDiscount / item.quantity)) // Mínimo de 1 centavo
+
+      return {
         id: item.id,
         title: item.title,
         quantity: item.quantity,
-        price_cents: item.price_cents
-      })),
+        price_cents: finalItemPrice
+      }
+    })
+
+    // Criar preferência no Mercado Pago com valores já com desconto aplicado
+    const preference = await createOrderPreference(
+      itemsForMP,
       (session as any).user.email,
       order.id,
       orderData.selectedShipping?.price_cents || orderData.shipping,
       orderData.selectedShipping?.service || 'Entrega'
     )
-
-    // Aplicar cupom se fornecido
-    if (coupon) {
-      await applyCoupon(coupon.code, order.id)
-    }
 
     // Salvar o ID da preferência nos metadados para referência futura
     // (O campo mp_preference_id não existe no schema atual)

@@ -13,6 +13,8 @@ interface CouponType {
   salePriceCents: number
   description: string
   image_url?: string
+  discountPercent?: number
+  isPercentual?: boolean
 }
 
 export default function DiscountCardsPage() {
@@ -30,6 +32,23 @@ export default function DiscountCardsPage() {
         setCouponTypes(data.couponTypes || [])
       } catch (error) {
         console.error('Erro ao carregar tipos de cupons:', error)
+        // Fallback para cupons de exemplo quando a API não funciona
+        setCouponTypes([
+          {
+            id: '1',
+            name: 'Cartão 25% de Desconto',
+            faceValueCents: 2500,
+            salePriceCents: 2000,
+            description: 'Cartão de desconto de 25%'
+          },
+          {
+            id: '2',
+            name: 'Cartão 50% de Desconto',
+            faceValueCents: 5000,
+            salePriceCents: 4000,
+            description: 'Cartão de desconto de 50%'
+          }
+        ])
       } finally {
         setLoading(false)
       }
@@ -38,8 +57,16 @@ export default function DiscountCardsPage() {
     fetchCouponTypes()
   }, [])
 
-  const calculateDiscount = (faceValue: number, salePrice: number) => {
-    return Math.round(((faceValue - salePrice) / faceValue) * 100)
+  const calculateDiscount = (coupon: CouponType) => {
+    // Se é um cupom percentual, retorna o percentual direto
+    if (coupon.isPercentual && coupon.discountPercent) {
+      return coupon.discountPercent
+    }
+    // Fallback para cupons de valor fixo
+    if (coupon.faceValueCents > 0) {
+      return Math.round(((coupon.faceValueCents - coupon.salePriceCents) / coupon.faceValueCents) * 100)
+    }
+    return 0
   }
 
   const handleBuyCoupon = async (couponTypeId: string) => {
@@ -87,56 +114,145 @@ export default function DiscountCardsPage() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Cupons Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 justify-items-center max-w-2xl">
           {couponTypes.map((coupon) => {
-            const discount = calculateDiscount(coupon.faceValueCents, coupon.salePriceCents)
+            const discount = calculateDiscount(coupon)
             const isPurchasing = purchasing === coupon.id
             const savings = coupon.faceValueCents - coupon.salePriceCents
 
             return (
               <div
                 key={coupon.id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-200"
+                className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-200 ${
+                  coupon.faceValueCents === 5000 || coupon.faceValueCents === 2500 ? 'max-w-sm mx-auto w-full' : ''
+                }`}
               >
-                {/* Card Header - Destaque da Porcentagem */}
-                <div className="bg-gradient-to-br from-brand-primary to-brand-primary-dark p-8 text-white text-center">
-                  <div className="text-6xl font-bold text-yellow-300 mb-2">
-                    {discount}%
+                {/* Card Header - Design baseado no percentual de desconto */}
+                {coupon.isPercentual && coupon.discountPercent === 50 ? (
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src="/uploads/50_.png" 
+                      alt="Cupom de 50% de desconto"
+                      className="w-full h-52 object-cover rounded-t-xl"
+                    />
                   </div>
-                  <div className="text-xl font-semibold">
-                    DE DESCONTO
+                ) : coupon.isPercentual && coupon.discountPercent === 25 ? (
+                  <div className="relative overflow-hidden">
+                    <img 
+                      src="/uploads/25_.png" 
+                      alt="Cupom de 25% de desconto"
+                      className="w-full h-52 object-cover rounded-t-xl"
+                    />
                   </div>
-                </div>
+                ) : (
+                  <div className="p-8 text-center relative overflow-hidden discount-card-header" style={{background: 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)'}}>
+                    <div className="relative z-10">
+                      <div 
+                        id={`discount-number-${discount}`}
+                        className="text-6xl font-bold mb-2 discount-number" 
+                        style={{
+                          color: '#000000', 
+                          fontWeight: '900',
+                          textShadow: 'none',
+                          opacity: '1',
+                          visibility: 'visible',
+                          display: 'block',
+                          fontSize: '4rem'
+                        }}
+                      >
+                        {discount}%
+                      </div>
+                      <div 
+                        id={`discount-text-${discount}`}
+                        className="text-xl font-semibold discount-text" 
+                        style={{
+                          color: '#000000', 
+                          fontWeight: '700',
+                          textShadow: 'none',
+                          opacity: '1',
+                          visibility: 'visible',
+                          display: 'block',
+                          fontSize: '1.25rem'
+                        }}
+                      >
+                        DE DESCONTO
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Card Body */}
                 <div className="p-6">
-                  <div className="text-center mb-6">
-                    <div className="text-2xl font-bold text-gray-900">
-                      {formatCurrency(coupon.salePriceCents)}
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => handleBuyCoupon(coupon.id)}
-                    disabled={isPurchasing}
-                    className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white py-4 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {isPurchasing ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                        Processando...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-5 h-5 mr-2" />
-                        Comprar
-                      </>
-                    )}
-                  </button>
+                  {coupon.isPercentual && coupon.discountPercent ? (
+                    // Design para cupons percentuais
+                    <>
+                      <div className="text-center mb-6">
+                        <div className="text-2xl font-bold text-gray-900 mb-1">
+                          {coupon.discountPercent}% de desconto
+                        </div>
+                        <div className="text-lg text-gray-600">
+                          por {formatCurrency(coupon.salePriceCents)}
+                        </div>
+                        <div className="text-sm text-gray-500 mt-2">
+                          Use em qualquer compra
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleBuyCoupon(coupon.id)}
+                        disabled={isPurchasing}
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white py-4 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      >
+                        {isPurchasing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-5 h-5 mr-2" />
+                            Comprar
+                          </>
+                        )}
+                      </button>
+                    </>
+                  ) : (
+                    // Design padrão para cupons de valor fixo (fallback)
+                    <>
+                      <div className="text-center mb-6">
+                        <div className="text-3xl font-bold text-gray-900 mb-2">
+                          {formatCurrency(coupon.faceValueCents)}
+                        </div>
+                        <div className="text-lg text-gray-600">
+                          por apenas {formatCurrency(coupon.salePriceCents)}
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => handleBuyCoupon(coupon.id)}
+                        disabled={isPurchasing}
+                        className="w-full bg-brand-primary hover:bg-brand-primary-dark text-white py-4 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      >
+                        {isPurchasing ? (
+                          <>
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Processando...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-5 h-5 mr-2" />
+                            Comprar
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )
           })}
+          </div>
         </div>
 
         {/* Como funciona */}
@@ -147,7 +263,7 @@ export default function DiscountCardsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-2xl">1</span>
+                <span id="step-number-1" className="font-bold text-2xl step-number" style={{color: '#ffffff', fontWeight: '900', display: 'inline-block', fontSize: '1.5rem', opacity: '1', visibility: 'visible', textShadow: 'none', background: 'transparent'}}>1</span>
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Escolha seu cartão</h3>
               <p className="text-gray-600">
@@ -156,7 +272,7 @@ export default function DiscountCardsPage() {
             </div>
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-2xl">2</span>
+                <span id="step-number-2" className="font-bold text-2xl step-number" style={{color: '#ffffff', fontWeight: '900', display: 'inline-block', fontSize: '1.5rem', opacity: '1', visibility: 'visible', textShadow: 'none', background: 'transparent'}}>2</span>
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Pague com segurança</h3>
               <p className="text-gray-600">
@@ -165,7 +281,7 @@ export default function DiscountCardsPage() {
             </div>
             <div className="text-center group">
               <div className="w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-primary-dark rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                <span className="text-white font-bold text-2xl">3</span>
+                <span id="step-number-3" className="font-bold text-2xl step-number" style={{color: '#ffffff', fontWeight: '900', display: 'inline-block', fontSize: '1.5rem', opacity: '1', visibility: 'visible', textShadow: 'none', background: 'transparent'}}>3</span>
               </div>
               <h3 className="font-bold text-xl text-gray-900 mb-3">Use quando quiser</h3>
               <p className="text-gray-600">

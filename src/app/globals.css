@@ -78,13 +78,7 @@ body {
 }
 
 /* Regras específicas para garantir contraste em todos os cenários */
-* {
-  color: inherit !important;
-}
-
-div, p, span, h1, h2, h3, h4, h5, h6 {
-  color: inherit !important;
-}
+/* Removida regra problemática que sobrescreve todas as cores */
 
 /* Garantir que fundos brancos sempre tenham texto escuro */
 .bg-white, .bg-gray-50, .bg-gray-100 {
@@ -94,6 +88,117 @@ div, p, span, h1, h2, h3, h4, h5, h6 {
 /* Garantir que fundos escuros sempre tenham texto branco */
 .bg-brand-primary, .bg-brand-primary-dark, .bg-gray-800, .bg-gray-900 {
   color: #ffffff !important;
+}
+
+/* CSS específico para os números de desconto */
+.discount-card-header .discount-number,
+.discount-card-header .discount-text {
+  color: #000000 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  font-weight: bold !important;
+}
+
+.discount-number {
+  color: #000000 !important;
+  font-size: 4rem !important;
+  font-weight: 900 !important;
+}
+
+.discount-text {
+  color: #000000 !important;
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+}
+
+/* CSS específico para os números dos passos - SUPER ESPECÍFICO */
+.step-number {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  display: inline-block !important;
+  font-size: 1.5rem !important;
+  line-height: 1 !important;
+}
+
+/* Seletores ainda mais específicos para os números dos steps */
+span.step-number,
+.step-number span,
+div span.step-number,
+.bg-gradient-to-br span.step-number {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  display: inline-block !important;
+  font-size: 1.5rem !important;
+  line-height: 1 !important;
+  background: transparent !important;
+}
+
+/* Força os números específicos 1, 2, 3 por ID - MÁXIMA ESPECIFICIDADE */
+#step-number-1,
+#step-number-2,
+#step-number-3,
+span#step-number-1,
+span#step-number-2,
+span#step-number-3,
+.bg-gradient-to-br #step-number-1,
+.bg-gradient-to-br #step-number-2,
+.bg-gradient-to-br #step-number-3,
+.bg-gradient-to-br span#step-number-1,
+.bg-gradient-to-br span#step-number-2,
+.bg-gradient-to-br span#step-number-3 {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  display: inline-block !important;
+  font-size: 1.5rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  background: transparent !important;
+  line-height: 1 !important;
+}
+
+/* Força TODOS os spans dentro de gradientes brand-primary */
+.bg-gradient-to-br.from-brand-primary span,
+.bg-gradient-to-br.from-brand-primary .step-number,
+div.bg-gradient-to-br.from-brand-primary span {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* CSS SUPER ESPECÍFICO para forçar exibição dos descontos */
+#discount-number-25,
+#discount-number-50,
+div[id^="discount-number-"] {
+  color: #000000 !important;
+  font-weight: 900 !important;
+  font-size: 4rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  text-shadow: none !important;
+  background: transparent !important;
+}
+
+#discount-text-25,
+#discount-text-50,
+div[id^="discount-text-"] {
+  color: #000000 !important;
+  font-weight: 700 !important;
+  font-size: 1.25rem !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+  text-shadow: none !important;
+  background: transparent !important;
 }
 
 /* Garantir visibilidade de textos específicos */

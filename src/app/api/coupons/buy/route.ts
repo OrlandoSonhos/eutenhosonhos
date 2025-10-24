@@ -27,7 +27,43 @@ export async function POST(request: NextRequest) {
     // Buscar tipo de cupom
     let couponType = COUPON_TYPES.find(type => type.id === couponTypeId)
     
-    // Se não encontrou nos tipos estáticos, verificar se é um cartão pré-pago
+    // Se não encontrou nos tipos estáticos, verificar se é um cupom de desconto
+    if (!couponType && couponTypeId.startsWith('discount-')) {
+      const discountCouponId = couponTypeId.replace('discount-', '')
+      
+      const discountCoupon = await prisma.discountCoupon.findFirst({
+        where: {
+          id: discountCouponId,
+          is_active: true
+        }
+      })
+      
+      if (discountCoupon) {
+         let salePriceCents = discountCoupon.sale_price_cents || 0
+         
+         // Calcular valores baseados no tipo e preço de venda
+         let faceValueCents = salePriceCents
+         if (discountCoupon.type === 'PERMANENT_25' && salePriceCents === 0) {
+           faceValueCents = 2500 // R$ 25
+           salePriceCents = 500   // R$ 5
+         } else if (discountCoupon.type === 'SPECIAL_50' && salePriceCents === 0) {
+           faceValueCents = 5000  // R$ 50
+           salePriceCents = 1000  // R$ 10
+         } else if (salePriceCents > 0) {
+           faceValueCents = Math.round(salePriceCents * 5) // 5x o preço de venda
+         }
+        
+        couponType = {
+          id: couponTypeId,
+          name: `Cartão ${discountCoupon.discount_percent}% de Desconto`,
+          faceValueCents: faceValueCents,
+          salePriceCents: salePriceCents,
+          description: `Cartão com ${discountCoupon.discount_percent}% de desconto`
+        }
+      }
+    }
+    
+    // Se não encontrou nos tipos estáticos nem nos cupons de desconto, verificar se é um cartão pré-pago
     if (!couponType && couponTypeId.startsWith('prepaid-')) {
       const faceValueCents = parseInt(couponTypeId.replace('prepaid-', ''))
       
@@ -93,55 +129,67 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    // Buscar cartões pré-pagos disponíveis
-    const availableCoupons = await prisma.coupon.findMany({
+    // Buscar cupons de desconto ativos do banco de dados
+    const discountCoupons = await prisma.discountCoupon.findMany({
       where: {
-        status: 'AVAILABLE',
-        expires_at: {
-          gt: new Date()
-        }
+        is_active: true
       },
-      select: {
-        face_value_cents: true,
-        sale_price_cents: true
+      orderBy: {
+        discount_percent: 'asc'
       }
     })
 
-    // Se não há cartões no banco, retornar os tipos estáticos
-    if (availableCoupons.length === 0) {
-      return NextResponse.json({
-        couponTypes: COUPON_TYPES
+    const couponTypes = []
+
+    // Converter cupons de desconto para o formato esperado pela página
+     for (const discountCoupon of discountCoupons) {
+       // Para cupons percentuais, o preço de venda é o que o cliente paga pelo cupom
+       let salePriceCents = discountCoupon.sale_price_cents || 0
+       
+       // Definir preços padrão baseados no tipo de cupom
+       if (discountCoupon.type === 'PERMANENT_25') {
+         if (salePriceCents === 0) {
+           salePriceCents = 500   // R$ 5,00 para comprar cupom de 25%
+         }
+       } else if (discountCoupon.type === 'SPECIAL_50') {
+         if (salePriceCents === 0) {
+           salePriceCents = 1000  // R$ 10,00 para comprar cupom de 50%
+         }
+       }
+      
+      couponTypes.push({
+        id: `discount-${discountCoupon.id}`,
+        name: `Cupom ${discountCoupon.discount_percent}% de Desconto`,
+        faceValueCents: 0, // Não é um vale-compra, é desconto percentual
+        salePriceCents: salePriceCents,
+        description: `Cupom de ${discountCoupon.discount_percent}% de desconto em qualquer compra`,
+        discountCouponId: discountCoupon.id,
+        discountPercent: discountCoupon.discount_percent,
+        isPercentual: true // Flag para indicar que é desconto percentual
       })
     }
 
-    // Agrupar por valor e criar tipos de cupom únicos
-    const uniqueValues = [...new Set(availableCoupons
-      .filter(coupon => coupon.face_value_cents != null && coupon.face_value_cents > 0)
-      .map(coupon => coupon.face_value_cents)
-    )]
-    
-    const couponTypes = uniqueValues.map(faceValueCents => {
-      const coupon = availableCoupons.find(c => c.face_value_cents === faceValueCents)
-      return {
-        id: `prepaid-${faceValueCents}`,
-        name: `Cartão Pré-pago R$ ${(faceValueCents / 100).toFixed(2)}`,
-        faceValueCents: faceValueCents,
-        salePriceCents: coupon?.sale_price_cents || 0,
-        description: `Cartão pré-pago de R$ ${(faceValueCents / 100).toFixed(2)} por apenas R$ ${((coupon?.sale_price_cents || 0) / 100).toFixed(2)}`
-      }
-    })
-
-    // Garantir que todos os objetos tenham ID
-    const validCouponTypes = couponTypes.filter(coupon => coupon.id && coupon.id.length > 0)
+    // Se não encontrou cupons de desconto ativos, retornar os tipos estáticos como fallback
+    if (couponTypes.length === 0) {
+      const limitedTypes = COUPON_TYPES.filter(type => 
+        type.id === 'cupom25' || type.id === 'cupom50'
+      )
+      return NextResponse.json({
+        couponTypes: limitedTypes
+      })
+    }
 
     return NextResponse.json({
-      couponTypes: validCouponTypes
+      couponTypes: couponTypes
     })
   } catch (error) {
-    console.error('Erro ao buscar cartões pré-pagos:', error)
-    // Em caso de erro, retornar os tipos estáticos
+    console.error('Erro ao buscar cartões de desconto:', error)
+    // Em caso de erro, retornar apenas os tipos limitados
+    const limitedTypes = COUPON_TYPES.filter(type => 
+      type.id === 'cupom25' || type.id === 'cupom50'
+    )
     return NextResponse.json({
-      couponTypes: COUPON_TYPES
+      couponTypes: limitedTypes
     })
   }
 }

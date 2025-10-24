@@ -23,6 +23,13 @@ interface AppliedCoupon {
   discountPercent?: number
 }
 
+interface AppliedDiscountCoupon {
+  code: string
+  discount_amount: number
+  discount_percent: number
+  type: 'PERMANENT_25' | 'SPECIAL_50'
+}
+
 interface ShippingOption {
   service: string
   price_cents: number
@@ -45,6 +52,10 @@ export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
+  const [appliedDiscountCoupon, setAppliedDiscountCoupon] = useState<AppliedDiscountCoupon | null>(null)
+  const [discountCouponCode, setDiscountCouponCode] = useState('')
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
+  const [couponError, setCouponError] = useState('')
   const [processingPayment, setProcessingPayment] = useState(false)
   const [cep, setCep] = useState('')
   const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([])
@@ -128,6 +139,7 @@ export default function CheckoutPage() {
   const getDiscount = () => {
     let totalDiscount = 0
     if (appliedCoupon) totalDiscount += appliedCoupon.discount
+    if (appliedDiscountCoupon) totalDiscount += appliedDiscountCoupon.discount_amount
     return totalDiscount
   }
 
@@ -229,6 +241,56 @@ export default function CheckoutPage() {
     }
   }
 
+  const validateDiscountCoupon = async () => {
+    if (!discountCouponCode.trim()) {
+      setCouponError('Digite um código de cupom')
+      return
+    }
+
+    setValidatingCoupon(true)
+    setCouponError('')
+
+    try {
+      const response = await fetch('/api/validate-discount-coupon', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          code: discountCouponCode.trim(),
+          total_cents: getSubtotal()
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setCouponError(data.error || 'Cupom inválido')
+        return
+      }
+
+      setAppliedDiscountCoupon({
+        code: data.code,
+        discount_amount: data.discount_amount,
+        discount_percent: data.discount_percent,
+        type: data.type
+      })
+      setDiscountCouponCode('')
+      setCouponError('')
+    } catch (error) {
+      console.error('Erro ao validar cupom:', error)
+      setCouponError('Erro ao validar cupom. Tente novamente.')
+    } finally {
+      setValidatingCoupon(false)
+    }
+  }
+
+  const removeDiscountCoupon = () => {
+    setAppliedDiscountCoupon(null)
+    setDiscountCouponCode('')
+    setCouponError('')
+  }
+
   const processPayment = async () => {
     if (cartItems.length === 0) {
       alert('Carrinho vazio')
@@ -241,6 +303,7 @@ export default function CheckoutPage() {
       const orderData = {
         items: cartItems,
         couponCode: appliedCoupon?.code,
+        discountCouponCode: appliedDiscountCoupon?.code,
         subtotal: getSubtotal(),
         shipping: getShipping(),
         discount: getDiscount(),
@@ -471,8 +534,18 @@ export default function CheckoutPage() {
                   <Gift className="w-5 h-5 mr-2" />
                   Cartão de Desconto
                 </h2>
-                <div className="bg-success border border-success rounded-lg p-4">
-                  <div className="flex items-center justify-between">
+                <div className="bg-success border border-success rounded-lg p-4 relative overflow-hidden">
+                  {/* Imagem de fundo para cartão de R$ 50 */}
+                  {appliedCoupon.faceValue === 5000 && (
+                    <div className="absolute top-2 right-2 w-20 h-20 opacity-70">
+                      <img 
+                        src="/uploads/50_.png" 
+                        alt="Cartão de R$ 50"
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center">
                       <Check className="w-5 h-5 text-success mr-2" />
                       <div>
@@ -494,6 +567,69 @@ export default function CheckoutPage() {
                 </div>
               </div>
             )}
+
+            {/* Discount Coupon Section */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Gift className="w-5 h-5 mr-2" />
+                Cupom de Desconto
+              </h2>
+
+              {appliedDiscountCoupon ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 relative overflow-hidden">
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center">
+                      <Check className="w-5 h-5 text-green-600 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-green-800">
+                          Cupom aplicado: {appliedDiscountCoupon.code}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          Desconto: {formatCurrency(appliedDiscountCoupon.discount_amount)} ({appliedDiscountCoupon.discount_percent}%)
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeDiscountCoupon}
+                      className="text-green-600 hover:text-green-800"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={discountCouponCode}
+                      onChange={(e) => setDiscountCouponCode(e.target.value)}
+                      placeholder="Digite o código do cupom"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                      disabled={validatingCoupon}
+                    />
+                    <button
+                      onClick={validateDiscountCoupon}
+                      disabled={validatingCoupon || !discountCouponCode.trim()}
+                      className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {validatingCoupon ? 'Validando...' : 'Aplicar'}
+                    </button>
+                  </div>
+                  
+                  {couponError && (
+                    <div className="flex items-center text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {couponError}
+                    </div>
+                  )}
+                  
+                  <p className="text-sm text-gray-500">
+                    Insira um código de cupom válido para obter desconto adicional
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Payment Section */}
@@ -526,6 +662,13 @@ export default function CheckoutPage() {
                   <div className="flex justify-between text-success">
                     <span>Cartão de Desconto ({appliedCoupon.code})</span>
                     <span className="font-medium">-{formatCurrency(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+
+                {appliedDiscountCoupon && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Cupom de Desconto ({appliedDiscountCoupon.code})</span>
+                    <span className="font-medium">-{formatCurrency(appliedDiscountCoupon.discount_amount)}</span>
                   </div>
                 )}
 

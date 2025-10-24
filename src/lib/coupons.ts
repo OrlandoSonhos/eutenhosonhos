@@ -1,4 +1,5 @@
 import { prismaWithRetry } from './prisma-utils'
+import { prisma } from './prisma'
 import { generateCouponCode, addDays } from './utils'
 import { sendEmail, generateCouponEmailTemplate } from './email'
 import { formatCurrency } from './utils'
@@ -99,10 +100,57 @@ export async function applyCoupon(code: string, orderId: string) {
 }
 
 export async function getUserCoupons(userId: string) {
-  return prismaWithRetry.coupon.findMany({
-    where: { buyer_id: userId },
-    orderBy: { created_at: 'desc' }
-  })
+  // Buscar cupons antigos (valor fixo)
+  const oldCoupons = await prismaWithRetry.coupon.findMany({
+    where: {
+      buyer_id: userId,
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+  });
+
+  // Buscar cupons percentuais comprados
+  const percentualCoupons = await prisma.discountCouponPurchase.findMany({
+    where: {
+      user_id: userId,
+    },
+    include: {
+      discount_coupon: true,
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
+  });
+
+  // Converter cupons percentuais para o formato unificado
+  const convertedPercentualCoupons = percentualCoupons.map((couponPurchase) => ({
+    id: couponPurchase.id,
+    code: couponPurchase.code,
+    buyer_id: couponPurchase.user_id,
+    face_value_cents: 0, // Cupons percentuais não têm valor fixo
+    sale_price_cents: 0,
+    is_used: !!couponPurchase.used_at, // Se tem used_at, está usado
+    expires_at: couponPurchase.expires_at,
+    used_at: couponPurchase.used_at,
+    created_at: couponPurchase.created_at,
+    updated_at: new Date(), // DiscountCouponPurchase não tem updated_at
+    order_id: null,
+    payment_id: null,
+    // Campos específicos para cupons percentuais
+    discount_percent: couponPurchase.discount_coupon.discount_percent,
+    isPercentual: true,
+    name: `Cupom ${couponPurchase.discount_coupon.discount_percent}% de Desconto`,
+    description: `Cupom com ${couponPurchase.discount_coupon.discount_percent}% de desconto`,
+  }));
+
+  // Combinar e ordenar todos os cupons
+  const allCoupons = [
+    ...oldCoupons.map(coupon => ({ ...coupon, isPercentual: false })),
+    ...convertedPercentualCoupons,
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return allCoupons;
 }
 
 export async function getCouponStats() {

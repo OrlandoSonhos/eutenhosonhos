@@ -217,20 +217,33 @@ async function processCouponPayment(paymentData: any) {
     const paidAmount = Math.round(paymentData.transaction_amount * 100) // Converter para centavos
     console.log('   Valor em centavos:', paidAmount)
     
-    console.log('   Tipos de cupom disponíveis:')
-    COUPON_TYPES.forEach(type => {
-      console.log(`     ${type.id}: R$ ${type.faceValueCents/100} por R$ ${type.salePriceCents/100}`)
-    })
+    // Buscar cupom de desconto baseado no valor pago
+    let discountCoupon = null
     
-    const couponType = COUPON_TYPES.find(type => type.salePriceCents === paidAmount)
+    // Mapear valores pagos para tipos de cupom de desconto
+    if (paidAmount === 500) { // R$ 5,00 = cupom de 25%
+      discountCoupon = await prisma.discountCoupon.findFirst({
+        where: {
+          type: 'PERMANENT_25',
+          is_active: true
+        }
+      })
+    } else if (paidAmount === 1000) { // R$ 10,00 = cupom de 50%
+      discountCoupon = await prisma.discountCoupon.findFirst({
+        where: {
+          type: 'SPECIAL_50',
+          is_active: true
+        }
+      })
+    }
     
-    if (!couponType) {
-      console.error('❌ Tipo de cupom não encontrado para valor:', paidAmount)
-      console.error('   Valores disponíveis:', COUPON_TYPES.map(t => t.salePriceCents))
+    if (!discountCoupon) {
+      console.error('❌ Cupom de desconto não encontrado para valor:', paidAmount)
+      console.error('   Valores aceitos: R$ 5,00 (25%) ou R$ 10,00 (50%)')
       return
     }
     
-    console.log('✅ Tipo de cupom encontrado:', couponType.id)
+    console.log('✅ Cupom de desconto encontrado:', discountCoupon.type, `${discountCoupon.discount_percent}%`)
 
     // Extrair ID do usuário do external_reference
     let userId = null
@@ -268,44 +281,78 @@ async function processCouponPayment(paymentData: any) {
 
     console.log('👤 Usuário final:', { userId, userEmail, userName })
 
-    // Criar cupom
-    const coupon = await createCoupon({
-      faceValueCents: couponType.faceValueCents,
-      salePriceCents: couponType.salePriceCents,
-      buyerId: userId || undefined,
-      expirationDays: 30
-    })
+    // Gerar código único para o cupom
+    const generateCouponCode = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+      let result = ''
+      for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return result
+    }
 
-    // Registrar pagamento
-    await prismaWithRetry.payment.create({
+    let couponCode = generateCouponCode()
+    
+    // Verificar se o código já existe
+    let existingCoupon = await prisma.discountCouponPurchase.findFirst({
+      where: { code: couponCode }
+    })
+    
+    while (existingCoupon) {
+      couponCode = generateCouponCode()
+      existingCoupon = await prisma.discountCouponPurchase.findFirst({
+        where: { code: couponCode }
+      })
+    }
+
+    // Verificar se temos um userId válido antes de criar o cupom
+    if (!userId) {
+      console.error('❌ Não é possível criar cupom sem userId válido')
+      console.error('   O pagamento foi processado mas o cupom não foi criado')
+      return
+    }
+
+    // Criar compra do cupom de desconto
+    const couponPurchase = await prisma.discountCouponPurchase.create({
       data: {
-        coupon_id: coupon.id,
-        mp_payment_id: paymentData.id.toString(),
-        amount_cents: paidAmount,
-        status: 'APPROVED',
-        method: getPaymentMethod(paymentData.payment_method_id)
+        code: couponCode,
+        discount_coupon_id: discountCoupon.id,
+        user_id: userId,
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano de validade
       }
     })
 
-    console.log('Cupom criado com sucesso:', coupon.code)
+    console.log('Cupom de desconto criado com sucesso:', couponCode)
+
+    // Registrar pagamento (opcional - pode criar uma tabela específica para pagamentos de cupons de desconto)
+    // Por enquanto, vamos apenas logar o pagamento
+    console.log('💰 Pagamento registrado:', {
+      mp_payment_id: paymentData.id.toString(),
+      amount_cents: paidAmount,
+      status: 'APPROVED',
+      method: getPaymentMethod(paymentData.payment_method_id),
+      coupon_code: couponCode
+    })
 
     // Enviar email com o cupom se houver email do usuário
     if (userEmail) {
       try {
         console.log('📧 Tentando enviar e-mail do cupom...')
         console.log('   Para:', userEmail)
-        console.log('   Código:', coupon.code)
-        console.log('   Valor:', coupon.faceValueCents)
+        console.log('   Código:', couponCode)
+        console.log('   Desconto:', `${discountCoupon.discount_percent}%`)
         console.log('   Nome:', userName)
         console.log('   SENDGRID_API_KEY:', process.env.SENDGRID_API_KEY ? 'CONFIGURADA' : 'NÃO CONFIGURADA')
         console.log('   SMTP_USER:', process.env.SMTP_USER)
         console.log('   SMTP_PASS:', process.env.SMTP_PASS ? '***configurada***' : 'NÃO CONFIGURADA')
         
+        // Enviar email personalizado para cupom de desconto percentual
         await sendCouponEmail({
           to: userEmail,
-          couponCode: coupon.code,
-          couponValue: coupon.faceValueCents,
-          customerName: userName
+          couponCode: couponCode,
+          couponValue: 0, // Não é valor fixo, é percentual
+          customerName: userName,
+          discountPercent: discountCoupon.discount_percent
         })
         
         console.log('✅ E-mail do cupom enviado com sucesso!')
