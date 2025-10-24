@@ -318,7 +318,7 @@ async function processCouponPayment(paymentData: any) {
       data: {
         code: couponCode,
         discount_coupon_id: discountCoupon.id,
-        user_id: userId,
+        buyer_id: userId,
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 ano de validade
       }
     })

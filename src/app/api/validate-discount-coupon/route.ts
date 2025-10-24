@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     // Buscar cupons comprados pelo usuário
     const couponPurchases = await (prismaWithRetry as any).discountCouponPurchase.findMany({
       where: { 
-        user_id: userId,
+        buyer_id: userId,
         code: code.toUpperCase(),
         is_used: false
       },

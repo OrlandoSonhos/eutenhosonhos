@@ -113,7 +113,7 @@ export async function getUserCoupons(userId: string) {
   // Buscar cupons percentuais comprados
   const percentualCoupons = await prisma.discountCouponPurchase.findMany({
     where: {
-      user_id: userId,
+      buyer_id: userId,
     },
     include: {
       discount_coupon: true,
@@ -127,7 +127,7 @@ export async function getUserCoupons(userId: string) {
   const convertedPercentualCoupons = percentualCoupons.map((couponPurchase) => ({
     id: couponPurchase.id,
     code: couponPurchase.code,
-    buyer_id: couponPurchase.user_id,
+    buyer_id: couponPurchase.buyer_id,
     face_value_cents: 0, // Cupons percentuais não têm valor fixo
     sale_price_cents: 0,
     is_used: !!couponPurchase.used_at, // Se tem used_at, está usado
