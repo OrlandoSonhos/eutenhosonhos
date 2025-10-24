@@ -13,20 +13,24 @@ interface Order {
     name: string
     email: string
   }
-  payment?: {
+  payments?: {
     id: string
     status: string
-    payment_method: string
-    external_id?: string
-  }
-  items: {
+    method: string
+    mp_payment_id?: string
+  }[]
+  order_items: {
     id: string
     quantity: number
     price_cents: number
-    coupon: {
-      code: string
-      face_value_cents: number
+    product: {
+      title: string
+      price_cents: number
     }
+  }[]
+  used_coupons: {
+    code: string
+    face_value_cents: number
   }[]
 }
 
@@ -191,14 +195,14 @@ export default function AdminOrdersPage() {
                   </div>
 
                   {/* Informações do Pagamento */}
-                  {order.payment && (
+                  {order.payments && order.payments.length > 0 && (
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Pagamento</h4>
                       <div className="text-sm text-gray-600">
-                        <p>Método: {order.payment.payment_method}</p>
-                        <p>Status: {order.payment.status}</p>
-                        {order.payment.external_id && (
-                          <p>ID Externo: {order.payment.external_id}</p>
+                        <p>Método: {order.payments[0].method}</p>
+                        <p>Status: {order.payments[0].status}</p>
+                        {order.payments[0].mp_payment_id && (
+                          <p>ID Externo: {order.payments[0].mp_payment_id}</p>
                         )}
                       </div>
                     </div>
@@ -209,14 +213,14 @@ export default function AdminOrdersPage() {
                 <div className="mt-6">
                   <h4 className="font-medium text-gray-900 mb-3">Itens do Pedido</h4>
                   <div className="space-y-2">
-                    {order.items.map((item) => (
+                    {order.order_items.map((item) => (
                       <div key={item.id} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                         <div>
                           <p className="font-medium text-gray-900">
-                            Cupom: {item.coupon.code}
+                            {item.product.title}
                           </p>
                           <p className="text-sm text-gray-600">
-                            Valor: {formatCurrency(item.coupon.face_value_cents)} × {item.quantity}
+                            Preço unitário: {formatCurrency(item.price_cents)} × {item.quantity}
                           </p>
                         </div>
                         <div className="text-right">
@@ -228,6 +232,27 @@ export default function AdminOrdersPage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Cupons Usados */}
+                {order.used_coupons && order.used_coupons.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-gray-900 mb-3">Cupons Usados</h4>
+                    <div className="space-y-2">
+                      {order.used_coupons.map((coupon, index) => (
+                        <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              Código: {coupon.code}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              Valor: {formatCurrency(coupon.face_value_cents)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

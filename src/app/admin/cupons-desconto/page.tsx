@@ -66,6 +66,9 @@ export default function DiscountCouponsPage() {
     max_uses: undefined
   })
 
+  // Estado temporário para o campo de preço durante a digitação
+  const [tempPriceValue, setTempPriceValue] = useState<string>('')
+
   // Filtros
   const [filters, setFilters] = useState({
     search: '',
@@ -120,11 +123,19 @@ export default function DiscountCouponsPage() {
   const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      // Validação especial para cupons SPECIAL_50
+      if (formData.type === 'SPECIAL_50') {
+        if (!formData.valid_from || !formData.valid_until) {
+          toast.error('Cupons de 50% devem ter datas de início e fim definidas')
+          return
+        }
+      }
+
       // Preparar dados com formato correto de datas
       const dataToSend = {
-        ...editFormData,
-        valid_from: editFormData.valid_from ? new Date(editFormData.valid_from).toISOString() : undefined,
-        valid_until: editFormData.valid_until ? new Date(editFormData.valid_until).toISOString() : undefined
+        ...formData,
+        valid_from: formData.valid_from ? new Date(formData.valid_from).toISOString() : undefined,
+        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : undefined
       }
 
       // Remover campos undefined
@@ -161,19 +172,63 @@ export default function DiscountCouponsPage() {
     if (!selectedCoupon) return
 
     try {
+      // Validação especial para cupons SPECIAL_50
+      if (editFormData.type === 'SPECIAL_50') {
+        if (!editFormData.valid_from || !editFormData.valid_until) {
+          toast.error('Cupons de 50% devem ter datas de início e fim definidas')
+          return
+        }
+      }
       // Preparar dados com formato correto de datas (código não é editável)
-      const dataToSend = {
-        ...editFormData,
-        valid_from: editFormData.valid_from ? new Date(editFormData.valid_from).toISOString() : undefined,
-        valid_until: editFormData.valid_until ? new Date(editFormData.valid_until).toISOString() : undefined
+      const dataToSend: any = {}
+      
+      // Adicionar apenas campos que foram modificados
+      if (editFormData.discount_percent !== undefined) {
+        dataToSend.discount_percent = editFormData.discount_percent
+      }
+      if (editFormData.type !== undefined) {
+        dataToSend.type = editFormData.type
+      }
+      if (editFormData.sale_price_cents !== undefined) {
+        dataToSend.sale_price_cents = editFormData.sale_price_cents
+      }
+      if (editFormData.is_active !== undefined) {
+        dataToSend.is_active = editFormData.is_active
+      }
+      // Para cupons SPECIAL_50, as datas são obrigatórias - sempre enviar
+      if (editFormData.type === 'SPECIAL_50' || selectedCoupon.type === 'SPECIAL_50') {
+        // Sempre enviar as datas para cupons SPECIAL_50
+        dataToSend.valid_from = editFormData.valid_from ? new Date(editFormData.valid_from).toISOString() : null
+        dataToSend.valid_until = editFormData.valid_until ? new Date(editFormData.valid_until).toISOString() : null
+      } else {
+        // Para outros tipos, só enviar se tiver valor
+        if (editFormData.valid_from) {
+          dataToSend.valid_from = new Date(editFormData.valid_from).toISOString()
+        }
+        if (editFormData.valid_until) {
+          dataToSend.valid_until = new Date(editFormData.valid_until).toISOString()
+        }
+      }
+      if (editFormData.max_uses !== undefined) {
+        dataToSend.max_uses = editFormData.max_uses
       }
 
-      // Remover campos undefined
-      Object.keys(dataToSend).forEach(key => {
-        if (dataToSend[key as keyof typeof dataToSend] === undefined) {
-          delete dataToSend[key as keyof typeof dataToSend]
-        }
-      })
+      console.log('=== DEBUG FRONTEND ===')
+      console.log('editFormData completo:', editFormData)
+      console.log('selectedCoupon:', selectedCoupon)
+      console.log('editFormData.valid_from:', editFormData.valid_from)
+      console.log('editFormData.valid_until:', editFormData.valid_until)
+      console.log('Dados sendo enviados:', dataToSend)
+      console.log('=== FIM DEBUG ===')
+      
+      // Verificação adicional
+      if (editFormData.type === 'SPECIAL_50' && (!dataToSend.valid_from || !dataToSend.valid_until)) {
+        console.error('ERRO: Cupom SPECIAL_50 sem datas válidas!')
+        console.error('dataToSend.valid_from:', dataToSend.valid_from)
+        console.error('dataToSend.valid_until:', dataToSend.valid_until)
+        toast.error('Erro: Datas não foram processadas corretamente')
+        return
+      }
 
       const response = await fetch(`/api/admin/discount-coupons/${selectedCoupon.id}`, {
         method: 'PUT',
@@ -182,6 +237,7 @@ export default function DiscountCouponsPage() {
       })
 
       const data = await response.json()
+      console.log('Resposta da API:', data)
 
       if (response.ok) {
         toast.success('Cartão atualizado com sucesso!')
@@ -190,6 +246,7 @@ export default function DiscountCouponsPage() {
         resetForm()
         fetchCoupons()
       } else {
+        console.error('Erro da API:', data)
         toast.error(data.error || 'Erro ao atualizar cartão')
       }
     } catch (error) {
@@ -280,6 +337,10 @@ export default function DiscountCouponsPage() {
       valid_until: validUntil,
       max_uses: coupon.max_uses || undefined
     })
+    
+    // Inicializar o valor temporário do preço
+    setTempPriceValue(coupon.sale_price_cents ? (coupon.sale_price_cents / 100).toFixed(2) : '')
+    
     setShowEditModal(true)
   }
 
@@ -455,12 +516,24 @@ export default function DiscountCouponsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">
-                          {coupon.valid_from && coupon.valid_until ? (
-                            <>
-                              {new Date(coupon.valid_from).toLocaleDateString('pt-BR')} - {new Date(coupon.valid_until).toLocaleDateString('pt-BR')}
-                            </>
+                          {coupon.type === 'SPECIAL_50' ? (
+                            // Para cupons SPECIAL_50, sempre mostrar datas (mesmo que sejam padrão)
+                            coupon.valid_from && coupon.valid_until ? (
+                              <>
+                                {new Date(coupon.valid_from).toLocaleDateString('pt-BR')} - {new Date(coupon.valid_until).toLocaleDateString('pt-BR')}
+                              </>
+                            ) : (
+                              <span className="text-red-600 font-medium">Datas não definidas</span>
+                            )
                           ) : (
-                            'Permanente'
+                            // Para outros tipos, usar a lógica original
+                            coupon.valid_from && coupon.valid_until ? (
+                              <>
+                                {new Date(coupon.valid_from).toLocaleDateString('pt-BR')} - {new Date(coupon.valid_until).toLocaleDateString('pt-BR')}
+                              </>
+                            ) : (
+                              'Permanente'
+                            )
                           )}
                         </div>
                       </td>
@@ -587,31 +660,39 @@ export default function DiscountCouponsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Venda (R$)</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                    type="text"
                     value={editFormData.sale_price_cents ? (editFormData.sale_price_cents / 100).toFixed(2) : ''}
                     onChange={(e) => {
-                      const value = e.target.value
+                      const value = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.')
+                      const numericValue = parseFloat(value) || 0
                       setEditFormData(prev => ({ 
                         ...prev, 
-                        sale_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined
+                        sale_price_cents: value ? Math.round(numericValue * 100) : undefined
+                      }))
+                    }}
+                    onBlur={(e) => {
+                      // Formatar o valor quando o campo perde o foco
+                      const value = parseFloat(e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.')) || 0
+                      e.target.value = value.toFixed(2)
+                      setEditFormData(prev => ({
+                        ...prev,
+                        sale_price_cents: value ? Math.round(value * 100) : undefined
                       }))
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    placeholder="Ex: 10.00"
+                    placeholder="Ex: 10,00"
                   />
                 </div>
 
-                {editFormData.type === 'SPECIAL_50' && (
+                {formData.type === 'SPECIAL_50' && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
                       <input
                         type="datetime-local"
                         required
-                        value={editFormData.valid_from}
-                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_from: e.target.value }))}
+                        value={formData.valid_from}
+                        onChange={(e) => setFormData(prev => ({ ...prev, valid_from: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -621,8 +702,8 @@ export default function DiscountCouponsPage() {
                       <input
                         type="datetime-local"
                         required
-                        value={editFormData.valid_until}
-                        onChange={(e) => setEditFormData(prev => ({ ...prev, valid_until: e.target.value }))}
+                        value={formData.valid_until}
+                        onChange={(e) => setFormData(prev => ({ ...prev, valid_until: e.target.value }))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                       />
                     </div>
@@ -709,19 +790,34 @@ export default function DiscountCouponsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Preço de Venda (R$)</label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={editFormData.sale_price_cents ? (editFormData.sale_price_cents / 100).toFixed(2) : ''}
+                    type="text"
+                    value={tempPriceValue}
                     onChange={(e) => {
                       const value = e.target.value
-                      setEditFormData(prev => ({ 
-                        ...prev, 
-                        sale_price_cents: value ? Math.round(parseFloat(value) * 100) : undefined
-                      }))
+                      // Permitir apenas números, vírgulas e pontos
+                      const cleanValue = value.replace(/[^0-9.,]/g, '')
+                      setTempPriceValue(cleanValue)
+                    }}
+                    onBlur={(e) => {
+                      let value = e.target.value.replace(',', '.')
+                      if (value && !isNaN(parseFloat(value))) {
+                        const numericValue = parseFloat(value)
+                        const formattedValue = numericValue.toFixed(2)
+                        setTempPriceValue(formattedValue)
+                        setEditFormData(prev => ({ 
+                          ...prev, 
+                          sale_price_cents: Math.round(numericValue * 100)
+                        }))
+                      } else if (!value) {
+                        setTempPriceValue('')
+                        setEditFormData(prev => ({ 
+                          ...prev, 
+                          sale_price_cents: undefined
+                        }))
+                      }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                    placeholder="Ex: 10.00"
+                    placeholder="Ex: 50.00"
                   />
                 </div>
 

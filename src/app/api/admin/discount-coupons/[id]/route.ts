@@ -8,11 +8,11 @@ const updateDiscountCouponSchema = z.object({
   code: z.string().min(3, 'Código deve ter pelo menos 3 caracteres').max(20, 'Código deve ter no máximo 20 caracteres').optional(),
   discount_percent: z.number().min(1).max(100, 'Desconto deve estar entre 1% e 100%').optional(),
   type: z.enum(['PERMANENT_25', 'SPECIAL_50']).optional(),
-  sale_price_cents: z.number().min(0).optional(),
+  sale_price_cents: z.union([z.number().min(0), z.null(), z.undefined()]).optional(),
   is_active: z.boolean().optional(),
-  valid_from: z.string().datetime().optional(),
-  valid_until: z.string().datetime().optional(),
-  max_uses: z.number().min(1).optional()
+  valid_from: z.union([z.string().datetime(), z.null(), z.undefined()]).optional(),
+  valid_until: z.union([z.string().datetime(), z.null(), z.undefined()]).optional(),
+  max_uses: z.union([z.number().min(1), z.null(), z.undefined()]).optional()
 })
 
 // GET - Obter cupom específico
@@ -89,9 +89,12 @@ export async function PUT(
 ) {
   const { id } = await params
   try {
+    console.log('PUT /api/admin/discount-coupons/[id] - Iniciando atualização do cupom:', id)
+    
     const session = await getServerSession(authOptions)
     
     if (!session || !(session as any).user || (session as any).user.role !== 'ADMIN') {
+      console.log('PUT /api/admin/discount-coupons/[id] - Acesso negado')
       return NextResponse.json(
         { error: 'Acesso negado' },
         { status: 403 }
@@ -99,8 +102,10 @@ export async function PUT(
     }
 
     const body = await request.json()
+    console.log('PUT /api/admin/discount-coupons/[id] - Body recebido:', JSON.stringify(body, null, 2))
     
     const validatedData = updateDiscountCouponSchema.parse(body)
+    console.log('PUT /api/admin/discount-coupons/[id] - Dados validados:', JSON.stringify(validatedData, null, 2))
 
     // Verificar se o cupom existe
     const existingCoupon = await prismaWithRetry.discountCoupon.findUnique({
@@ -129,8 +134,9 @@ export async function PUT(
       )
     }
 
-    // Se mudando para SPECIAL_50, verificar se tem datas
-    if (validatedData.type === 'SPECIAL_50') {
+    // Se é ou está mudando para SPECIAL_50, verificar se tem datas
+    const finalType = validatedData.type || (existingCoupon as any).type
+    if (finalType === 'SPECIAL_50') {
       const finalValidFrom = validatedData.valid_from || (existingCoupon as any).valid_from
       const finalValidUntil = validatedData.valid_until || (existingCoupon as any).valid_until
       
@@ -156,27 +162,42 @@ export async function PUT(
       }
     }
 
+    console.log('PUT /api/admin/discount-coupons/[id] - Preparando dados para atualização')
+    const updateData = {
+      ...validatedData,
+      ...(validatedData.code && { code: validatedData.code.toUpperCase() }),
+      ...(validatedData.valid_from && { valid_from: new Date(validatedData.valid_from) }),
+      ...(validatedData.valid_until && { valid_until: new Date(validatedData.valid_until) })
+    }
+    console.log('PUT /api/admin/discount-coupons/[id] - Dados para atualização:', JSON.stringify(updateData, null, 2))
+
     const updatedCoupon = await prismaWithRetry.discountCoupon.update({
       where: { id },
-      data: {
-        ...validatedData,
-        ...(validatedData.code && { code: validatedData.code.toUpperCase() }),
-        ...(validatedData.valid_from && { valid_from: new Date(validatedData.valid_from) }),
-        ...(validatedData.valid_until && { valid_until: new Date(validatedData.valid_until) })
-      }
+      data: updateData
     })
 
+    console.log('PUT /api/admin/discount-coupons/[id] - Cupom atualizado com sucesso:', updatedCoupon.id)
     return NextResponse.json(updatedCoupon)
 
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.log('PUT /api/admin/discount-coupons/[id] - Erro de validação Zod')
       return NextResponse.json(
-        { error: 'Dados inválidos', details: (error as any).errors },
+        { error: 'Dados inválidos', details: error.issues },
         { status: 400 }
       )
     }
 
-    console.error('Erro ao atualizar cupom:', error)
+    console.error('PUT /api/admin/discount-coupons/[id] - ERRO INTERNO DETALHADO:')
+    console.error('PUT /api/admin/discount-coupons/[id] - Tipo do erro:', typeof error)
+    console.error('PUT /api/admin/discount-coupons/[id] - Erro completo:', error)
+    console.error('PUT /api/admin/discount-coupons/[id] - Mensagem do erro:', error instanceof Error ? error.message : 'Sem mensagem')
+    console.error('PUT /api/admin/discount-coupons/[id] - Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
+    
+    if (error && typeof error === 'object' && 'code' in error) {
+      console.error('PUT /api/admin/discount-coupons/[id] - Código do erro:', (error as any).code)
+    }
+    
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

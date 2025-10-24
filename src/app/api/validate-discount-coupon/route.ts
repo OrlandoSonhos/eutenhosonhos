@@ -72,7 +72,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificações de validade removidas - campos valid_from e valid_until não existem no schema
+    // Verificar datas de validade do cupom
+    const now = new Date()
+    
+    if (coupon.valid_from && now < coupon.valid_from) {
+      return NextResponse.json(
+        { 
+          valid: false, 
+          error: 'Cartão ainda não está válido. Verifique a data de início.' 
+        },
+        { status: 400 }
+      )
+    }
+
+    if (coupon.valid_until && now > coupon.valid_until) {
+      return NextResponse.json(
+        { 
+          valid: false, 
+          error: 'Cartão expirado. Período de validade encerrado.' 
+        },
+        { status: 400 }
+      )
+    }
 
     // Calcular desconto
     const discount_amount = Math.floor((total_cents * coupon.discount_percent) / 100)

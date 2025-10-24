@@ -244,6 +244,9 @@ model DiscountCoupon {
   discount_percent  Int                 // 25, 50, etc.
   is_active         Boolean             @default(true)
   sale_price_cents  Int?                // Preço de venda em centavos
+  valid_from        DateTime?           // Data de início da validade
+  valid_until       DateTime?           // Data de fim da validade
+  max_uses          Int?                // Limite máximo de usos
   created_at        DateTime            @default(now())
   updated_at        DateTime            @updatedAt
 

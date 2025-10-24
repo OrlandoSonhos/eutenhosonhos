@@ -132,6 +132,16 @@ export const prismaWithRetry = {
     delete: (args: any) => executeWithRetry(() => prisma.discountCoupon.delete(args))
   },
 
+  discountCouponPurchase: {
+    count: (args?: any) => executeWithRetry(() => prisma.discountCouponPurchase.count(args)),
+    findMany: (args?: any) => executeWithRetry(() => prisma.discountCouponPurchase.findMany(args)),
+    findFirst: (args?: any) => executeWithRetry(() => prisma.discountCouponPurchase.findFirst(args)),
+    findUnique: (args: any) => executeWithRetry(() => prisma.discountCouponPurchase.findUnique(args)),
+    create: (args: any) => executeWithRetry(() => prisma.discountCouponPurchase.create(args)),
+    update: (args: any) => executeWithRetry(() => prisma.discountCouponPurchase.update(args)),
+    delete: (args: any) => executeWithRetry(() => prisma.discountCouponPurchase.delete(args))
+  },
+
   orderItem: {
     count: (args?: any) => executeWithRetry(() => prisma.orderItem.count(args)),
     findMany: (args?: any) => executeWithRetry(() => prisma.orderItem.findMany(args)),
