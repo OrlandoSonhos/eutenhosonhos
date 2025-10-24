@@ -115,8 +115,21 @@ export async function getUserCoupons(userId: string) {
     where: {
       buyer_id: userId,
     },
-    include: {
-      discount_coupon: true,
+    select: {
+      id: true,
+      code: true,
+      buyer_id: true,
+      expires_at: true,
+      used_at: true,
+      created_at: true,
+      discount_coupon: {
+        select: {
+          id: true,
+          type: true,
+          discount_percent: true,
+          is_active: true,
+        }
+      }
     },
     orderBy: {
       created_at: 'desc',
@@ -124,25 +137,39 @@ export async function getUserCoupons(userId: string) {
   });
 
   // Converter cupons percentuais para o formato unificado
-  const convertedPercentualCoupons = percentualCoupons.map((couponPurchase) => ({
-    id: couponPurchase.id,
-    code: couponPurchase.code,
-    buyer_id: couponPurchase.buyer_id,
-    face_value_cents: 0, // Cupons percentuais não têm valor fixo
-    sale_price_cents: 0,
-    is_used: !!couponPurchase.used_at, // Se tem used_at, está usado
-    expires_at: couponPurchase.expires_at,
-    used_at: couponPurchase.used_at,
-    created_at: couponPurchase.created_at,
-    updated_at: new Date(), // DiscountCouponPurchase não tem updated_at
-    order_id: null,
-    payment_id: null,
-    // Campos específicos para cupons percentuais
-    discount_percent: couponPurchase.discount_coupon.discount_percent,
-    isPercentual: true,
-    name: `Cupom ${couponPurchase.discount_coupon.discount_percent}% de Desconto`,
-    description: `Cupom com ${couponPurchase.discount_coupon.discount_percent}% de desconto`,
-  }));
+  const convertedPercentualCoupons = percentualCoupons.map((couponPurchase) => {
+    const isExpired = couponPurchase.expires_at ? new Date(couponPurchase.expires_at) < new Date() : false;
+    const isUsed = !!couponPurchase.used_at;
+    
+    let status: 'AVAILABLE' | 'USED' | 'EXPIRED';
+    if (isUsed) {
+      status = 'USED';
+    } else if (isExpired) {
+      status = 'EXPIRED';
+    } else {
+      status = 'AVAILABLE';
+    }
+
+    return {
+      id: couponPurchase.id,
+      code: couponPurchase.code,
+      buyer_id: couponPurchase.buyer_id,
+      face_value_cents: 0, // Cupons percentuais não têm valor fixo
+      sale_price_cents: 0,
+      is_used: isUsed,
+      status: status,
+      expires_at: couponPurchase.expires_at,
+      used_at: couponPurchase.used_at,
+      created_at: couponPurchase.created_at,
+      updated_at: new Date(), // DiscountCouponPurchase não tem updated_at
+      // Campos específicos para cupons percentuais
+      discount_percent: couponPurchase.discount_coupon.discount_percent,
+      isPercentual: true,
+      is_percentual: true, // Compatibilidade com a interface da página
+      name: `Cupom ${couponPurchase.discount_coupon.discount_percent}% de Desconto`,
+      description: `Cupom com ${couponPurchase.discount_coupon.discount_percent}% de desconto`,
+    };
+  });
 
   // Combinar e ordenar todos os cupons
   const allCoupons = [

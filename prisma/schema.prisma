@@ -255,7 +255,7 @@ model DiscountCoupon {
 
 model DiscountCouponPurchase {
   id                  String    @id @default(cuid())
-  user_id             String
+  buyer_id            String
   discount_coupon_id  String
   order_id            String?
   code                String    @unique
@@ -264,11 +264,11 @@ model DiscountCouponPurchase {
   created_at          DateTime  @default(now())
 
   // Relations
-  user            User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  buyer           User           @relation(fields: [buyer_id], references: [id], onDelete: Cascade)
   discount_coupon DiscountCoupon @relation(fields: [discount_coupon_id], references: [id], onDelete: Cascade)
   order           Order?         @relation(fields: [order_id], references: [id])
 
-  @@index([user_id])
+  @@index([buyer_id])
   @@index([discount_coupon_id])
   @@index([code])
   @@map("discount_coupon_purchases")

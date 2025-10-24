@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Gift, Copy, Check, Clock, X } from 'lucide-react'
+import { Gift, Copy, Check, Clock, X, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface Coupon {
@@ -182,98 +182,123 @@ export default function MyDiscountCardsPage() {
               return (
                 <div
                   key={coupon.id}
-                  className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow relative overflow-hidden"
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow relative overflow-hidden"
                 >
-                  {/* Imagem de fundo para cartões especiais */}
-                  {((coupon.is_percentual && coupon.discount_percent === 50) || coupon.face_value_cents === 5000) && (
-                    <div className="absolute top-2 right-2 w-20 h-20 opacity-70">
-                      <img 
-                        src="/uploads/50_.png" 
-                        alt="Cartão de 50% de desconto"
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                  {((coupon.is_percentual && coupon.discount_percent === 25) || coupon.face_value_cents === 2500) && (
-                    <div className="absolute top-2 right-2 w-20 h-20 opacity-70">
-                      <img 
-                        src="/uploads/25_.png" 
-                        alt="Cartão de 25% de desconto"
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center mb-3">
-                        <div className="text-2xl font-bold text-brand-primary mr-4">
-                          {coupon.is_percentual 
-                            ? `${coupon.discount_percent}% de desconto`
-                            : formatCurrency(coupon.face_value_cents)
-                          }
-                        </div>
-                        <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color}`}>
-                          <StatusIcon className="w-4 h-4 mr-1" />
-                          {statusInfo.label}
+                  <div className="flex flex-col sm:flex-row">
+                    {/* Lado esquerdo - Imagem do cartão */}
+                    <div className="flex-shrink-0 sm:w-48 md:w-56 lg:w-64">
+                      <div className="h-48 sm:h-full bg-gradient-to-br from-[var(--primary-teal)] to-[var(--primary-teal-dark)] rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none flex items-center justify-center relative">
+                        {/* Imagem específica do cartão */}
+                        {((coupon.is_percentual && coupon.discount_percent === 50) || coupon.face_value_cents === 5000) && (
+                          <img 
+                            src="/uploads/50_.png" 
+                            alt="Cartão de 50% de desconto"
+                            className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 object-contain"
+                          />
+                        )}
+                        {((coupon.is_percentual && coupon.discount_percent === 25) || coupon.face_value_cents === 2500) && (
+                          <img 
+                            src="/uploads/25_.png" 
+                            alt="Cartão de 25% de desconto"
+                            className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 object-contain"
+                          />
+                        )}
+                        {/* Ícone padrão se não houver imagem específica */}
+                        {!((coupon.is_percentual && (coupon.discount_percent === 50 || coupon.discount_percent === 25)) || 
+                           coupon.face_value_cents === 5000 || coupon.face_value_cents === 2500) && (
+                          <Gift className="w-20 h-20 sm:w-24 sm:h-24 text-white" />
+                        )}
+                        
+                        {/* Badge de desconto sobreposto */}
+                        <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
+                          <span className="text-xs font-bold text-[var(--primary-teal)]">
+                            {coupon.is_percentual 
+                              ? `${coupon.discount_percent}%`
+                              : `${calculateDiscount(coupon)}%`
+                            }
+                          </span>
                         </div>
                       </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Código:</span>
-                          <div className="flex items-center mt-1">
-                            <code className="bg-gray-100 px-2 py-1 rounded font-mono text-lg">
-                              {coupon.code}
-                            </code>
-                            <button
-                              onClick={() => copyToClipboard(coupon.code)}
-                              className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                              title="Copiar código"
-                            >
-                              {copiedCode === coupon.code ? (
-                                <Check className="w-4 h-4 text-success" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </button>
+                    </div>
+
+                    {/* Lado direito - Conteúdo */}
+                    <div className="flex-1 p-4 sm:p-6">
+                      <div className="flex flex-col h-full">
+                        {/* Header com título e status */}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
+                          <div className="mb-2 sm:mb-0">
+                            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+                              {coupon.is_percentual 
+                                ? `${coupon.discount_percent}% de desconto`
+                                : formatCurrency(coupon.face_value_cents)
+                              }
+                            </h3>
+                          </div>
+                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusInfo.color} self-start`}>
+                            <StatusIcon className="w-4 h-4 mr-1" />
+                            {statusInfo.label}
                           </div>
                         </div>
                         
-                        <div>
-                          <span className="font-medium">Válido até:</span>
-                          <div className={`mt-1 ${isExpired ? 'text-error' : ''}`}>
-                            {formatDate(coupon.expires_at)}
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <span className="font-medium">Comprado em:</span>
-                          <div className="mt-1">
-                            {formatDate(coupon.created_at)}
-                          </div>
-                        </div>
-                        
-                        {coupon.used_at && (
+                        {/* Informações do cupom */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-sm text-gray-600 mb-4">
                           <div>
-                            <span className="font-medium">Usado em:</span>
-                            <div className="mt-1">
-                              {formatDate(coupon.used_at)}
+                            <span className="font-medium">Código:</span>
+                            <div className="flex items-center mt-1">
+                              <code className="bg-gray-100 px-2 py-1 rounded font-mono text-sm sm:text-base">
+                                {coupon.code}
+                              </code>
+                              <button
+                                onClick={() => copyToClipboard(coupon.code)}
+                                className="ml-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Copiar código"
+                              >
+                                {copiedCode === coupon.code ? (
+                                  <Check className="w-4 h-4 text-success" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </button>
                             </div>
+                          </div>
+                          
+                          <div>
+                            <span className="font-medium">Válido até:</span>
+                            <div className={`mt-1 ${isExpired ? 'text-error' : ''}`}>
+                              {formatDate(coupon.expires_at)}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <span className="font-medium">Comprado em:</span>
+                            <div className="mt-1">
+                              {formatDate(coupon.created_at)}
+                            </div>
+                          </div>
+                          
+                          {coupon.used_at && (
+                            <div>
+                              <span className="font-medium">Usado em:</span>
+                              <div className="mt-1">
+                                {formatDate(coupon.used_at)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Botão de ação */}
+                        {coupon.status === 'AVAILABLE' && !isExpired && (
+                          <div className="mt-auto">
+                            <button
+                              onClick={() => router.push('/')}
+                              className="w-full sm:w-auto bg-[var(--primary-teal)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[var(--primary-teal-dark)] transition-colors shadow-md hover:shadow-lg"
+                            >
+                              Usar Cartão
+                            </button>
                           </div>
                         )}
                       </div>
                     </div>
-                    
-                    {coupon.status === 'AVAILABLE' && !isExpired && (
-                      <div className="mt-4 lg:mt-0 lg:ml-6">
-                        <button
-                          onClick={() => router.push('/')}
-                          className="w-full lg:w-auto bg-brand-primary text-white px-6 py-2 rounded-lg font-medium hover:bg-brand-primary-dark transition-colors"
-                        >
-                          Usar Cartão
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )
