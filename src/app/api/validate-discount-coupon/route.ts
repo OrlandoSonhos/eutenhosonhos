@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     const { code, total_cents } = validateCouponSchema.parse(body)
     const userId = (session as any).user.id
 
-    // Buscar cupons comprados pelo usuário
+    // Buscar cupons comprados pelo usuário - Fix: Garantir tipagem correta
     const couponPurchases = await prismaWithRetry.discountCouponPurchase.findMany({
       where: { 
         buyer_id: userId,
