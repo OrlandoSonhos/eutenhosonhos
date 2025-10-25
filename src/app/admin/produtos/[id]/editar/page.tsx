@@ -25,6 +25,7 @@ interface ProductForm {
   stock: number
   images: string[]
   active: boolean
+  featured: boolean
   category_id?: string
 }
 
@@ -58,6 +59,7 @@ function EditProductContent({ productId }: { productId: string }) {
     stock: 0,
     images: [],
     active: true,
+    featured: false,
     category_id: undefined
   })
 
@@ -107,6 +109,7 @@ function EditProductContent({ productId }: { productId: string }) {
           stock: productData.stock,
           images: productData.images,
           active: productData.active,
+          featured: productData.featured || false,
           category_id: productData.category?.id
         })
       } catch (error) {
@@ -369,7 +372,7 @@ function EditProductContent({ productId }: { productId: string }) {
             </div>
 
             {/* Status */}
-            <div className="md:col-span-2">
+            <div className="md:col-span-2 space-y-3">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -379,6 +382,18 @@ function EditProductContent({ productId }: { productId: string }) {
                 />
                 <span className="text-sm font-medium text-gray-700">
                   Produto ativo (visível na loja)
+                </span>
+              </label>
+              
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(e) => setForm(prev => ({ ...prev, featured: e.target.checked }))}
+                  className="rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  ⭐ Produto em destaque (aparece no carrossel da página inicial)
                 </span>
               </label>
             </div>

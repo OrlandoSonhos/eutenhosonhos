@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, ShoppingCart, Filter, X } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { ProductCarousel } from '@/components/ui/product-carousel'
+import { FeaturedProductsCarousel } from '@/components/ui/featured-products-carousel'
 
 interface Product {
   id: string
@@ -138,6 +139,9 @@ export default function HomePage() {
             Descubra nossa seleção de produtos e use seus cartões de desconto para economizar!
           </p>
         </div>
+
+        {/* Featured Products Carousel */}
+        <FeaturedProductsCarousel className="mb-8" />
 
         {/* Search and Mobile Filter Button */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">

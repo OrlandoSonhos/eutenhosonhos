@@ -11,6 +11,7 @@ const createProductSchema = z.object({
   stock: z.number().min(0, 'Estoque não pode ser negativo'),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória'),
   active: z.boolean().default(true),
+  featured: z.boolean().default(false),
   category_id: z.string().nullable().optional()
 })
 

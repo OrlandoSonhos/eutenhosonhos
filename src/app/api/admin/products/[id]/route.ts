@@ -11,6 +11,7 @@ const updateProductSchema = z.object({
   stock: z.number().min(0, 'Estoque não pode ser negativo').optional(),
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória').optional(),
   active: z.boolean().optional(),
+  featured: z.boolean().optional(),
   category_id: z.string().nullable().optional(),
   is_auction: z.boolean().optional(),
   auction_date: z.string().datetime().nullable().optional(),
