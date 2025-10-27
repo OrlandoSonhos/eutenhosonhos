@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     // Calcular peso total e buscar produtos
     let totalWeight = 0
     let totalValue = 0
+    let hasFreeShipping = false
     
     for (const item of items) {
       const product = await prismaWithRetry.product.findUnique({
@@ -38,10 +39,32 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Verificar se algum produto tem frete grátis
+      if (product.free_shipping) {
+        hasFreeShipping = true
+      }
+
       // Peso estimado: 100g por produto (pode ser configurado no futuro)
       const productWeight = 100 // gramas
       totalWeight += productWeight * item.quantity
       totalValue += (product.price_cents / 100) * item.quantity
+    }
+
+    // Se algum produto tem frete grátis, retornar frete zero
+    if (hasFreeShipping) {
+      return NextResponse.json({
+        success: true,
+        address: cepValidation.address,
+        shippingOptions: [
+          {
+            codigo: 'FREE',
+            nome: 'Frete Grátis',
+            prazo: 5,
+            valor: 0,
+            valorCents: 0
+          }
+        ]
+      })
     }
 
     // Obter dimensões baseadas no peso total

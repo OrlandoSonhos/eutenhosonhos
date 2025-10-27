@@ -83,6 +83,7 @@ model Product {
   images           String    // JSON string para armazenar array de imagens
   active           Boolean   @default(true)
   featured         Boolean   @default(false)
+  free_shipping    Boolean   @default(false)
   category_id      String?
   is_auction       Boolean   @default(false)
   auction_date     DateTime?
