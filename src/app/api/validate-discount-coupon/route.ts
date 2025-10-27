@@ -135,90 +135,111 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar restrições por categoria
-    if (cart_items && cart_items.length > 0) {
-      // Buscar restrições do cupom
-      const couponRestrictions = await prisma.couponCategoryRestriction.findMany({
-        where: {
-          coupon_type: coupon.type
-        },
-        include: { category: true }
-      })
+    // Verificar restrições por categoria do produto selecionado
+    // Buscar restrições do cupom
+    const couponRestrictions = await prisma.couponCategoryRestriction.findMany({
+      where: {
+        coupon_type: coupon.type
+      },
+      include: { category: true }
+    })
 
-      console.log(`[COUPON_VALIDATION] Verificando restrições para cupom ${coupon.type}:`, {
-        coupon_id: coupon.id,
-        restrictions_count: couponRestrictions.length,
-        cart_items_count: cart_items.length,
-        user_id: userId
-      })
+    console.log(`[COUPON_VALIDATION] Verificando restrições para cupom ${coupon.type}:`, {
+      coupon_id: coupon.id,
+      restrictions_count: couponRestrictions.length,
+      selected_product_id: selectedProduct.id,
+      selected_product_category: selectedProduct.category_id,
+      user_id: userId
+    })
 
-      if (couponRestrictions.length > 0) {
-        // Extrair categorias dos itens do carrinho
-        const cartCategoryIds = cart_items
-          .map(item => item.category_id)
-          .filter(Boolean) as string[]
+    if (couponRestrictions.length > 0) {
+      // Obter a categoria do produto selecionado
+      const selectedProductCategoryId = selectedProduct.category_id
 
-        console.log(`[COUPON_VALIDATION] Categorias no carrinho:`, {
-          category_ids: cartCategoryIds,
-          cart_items: cart_items.map(item => ({
-            id: item.id,
-            title: item.title,
-            category_id: item.category_id
-          }))
-        })
-
-        // Verificar restrições
-        for (const restriction of couponRestrictions) {
-          console.log(`[COUPON_VALIDATION] Verificando restrição:`, {
-            restriction_type: restriction.restriction_type,
-            category_id: restriction.category_id,
-            category_name: restriction.category.name
-          })
-
-          if (restriction.restriction_type === 'ALLOWED') {
-            // Cupom pode ser usado nesta categoria específica
-            if (!cartCategoryIds.includes(restriction.category_id)) {
-              console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - ALLOWED:`, {
-                allowed_category: restriction.category.name,
-                cart_categories: cartCategoryIds,
-                user_id: userId
-              })
-              
-              return NextResponse.json(
-                { 
-                  valid: false, 
-                  error: `Este cartão só pode ser usado em produtos da categoria: ${restriction.category.name}` 
-                },
-                { status: 400 }
-              )
-            }
-          } else if (restriction.restriction_type === 'FORBIDDEN') {
-            // Cupom não pode ser usado nesta categoria específica
-            if (cartCategoryIds.includes(restriction.category_id)) {
-              console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - FORBIDDEN:`, {
-                forbidden_category: restriction.category.name,
-                cart_categories: cartCategoryIds,
-                user_id: userId
-              })
-              
-              return NextResponse.json(
-                { 
-                  valid: false, 
-                  error: `Este cartão não pode ser usado em produtos da categoria: ${restriction.category.name}` 
-                },
-                { status: 400 }
-              )
-            }
-          }
-        }
-
-        console.log(`[COUPON_VALIDATION] Todas as restrições de categoria foram atendidas`, {
-          coupon_type: coupon.type,
+      if (!selectedProductCategoryId) {
+        console.log(`[COUPON_VALIDATION] ERRO - Produto selecionado sem categoria:`, {
+          product_id: selectedProduct.id,
+          product_title: selectedProduct.title,
           user_id: userId
         })
-      } else {
-        console.log(`[COUPON_VALIDATION] Nenhuma restrição de categoria encontrada para o cupom ${coupon.type}`)
+        
+        return NextResponse.json(
+          { 
+            valid: false, 
+            error: 'Produto selecionado não possui categoria definida' 
+          },
+          { status: 400 }
+        )
       }
+
+      console.log(`[COUPON_VALIDATION] Categoria do produto selecionado:`, {
+        product_id: selectedProduct.id,
+        product_title: selectedProduct.title,
+        category_id: selectedProductCategoryId
+      })
+
+      // Verificar restrições apenas para o produto selecionado
+      for (const restriction of couponRestrictions) {
+        console.log(`[COUPON_VALIDATION] Verificando restrição:`, {
+          restriction_type: restriction.restriction_type,
+          restriction_category_id: restriction.category_id,
+          restriction_category_name: restriction.category.name,
+          selected_product_category_id: selectedProductCategoryId
+        })
+
+        if (restriction.restriction_type === 'ALLOWED') {
+          // Cupom pode ser usado apenas nesta categoria específica
+          if (selectedProductCategoryId === restriction.category_id) {
+            console.log(`[COUPON_VALIDATION] RESTRIÇÃO ATENDIDA - ALLOWED:`, {
+              allowed_category: restriction.category.name,
+              selected_product_category: selectedProductCategoryId,
+              user_id: userId
+            })
+            // Categoria permitida - continuar validação
+            break
+          } else {
+            // Produto não está na categoria permitida
+            console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - ALLOWED:`, {
+              allowed_category: restriction.category.name,
+              selected_product_category: selectedProductCategoryId,
+              user_id: userId
+            })
+            
+            return NextResponse.json(
+              { 
+                valid: false, 
+                error: `Este cartão só pode ser usado em produtos da categoria: ${restriction.category.name}` 
+              },
+              { status: 400 }
+            )
+          }
+        } else if (restriction.restriction_type === 'FORBIDDEN') {
+          // Cupom não pode ser usado nesta categoria específica
+          if (selectedProductCategoryId === restriction.category_id) {
+            console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - FORBIDDEN:`, {
+              forbidden_category: restriction.category.name,
+              selected_product_category: selectedProductCategoryId,
+              user_id: userId
+            })
+            
+            return NextResponse.json(
+              { 
+                valid: false, 
+                error: `Este cartão não pode ser usado em produtos da categoria: ${restriction.category.name}` 
+              },
+              { status: 400 }
+            )
+          }
+        }
+      }
+
+      console.log(`[COUPON_VALIDATION] Todas as restrições de categoria foram atendidas`, {
+        coupon_type: coupon.type,
+        selected_product_category: selectedProductCategoryId,
+        user_id: userId
+      })
+    } else {
+      console.log(`[COUPON_VALIDATION] Nenhuma restrição de categoria encontrada para o cupom ${coupon.type}`)
     }
 
     // Calcular desconto apenas para o produto selecionado
