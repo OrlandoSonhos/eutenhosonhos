@@ -196,16 +196,16 @@ export default function MyDiscountCardsPage() {
                             className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 object-contain"
                           />
                         )}
-                        {((coupon.is_percentual && coupon.discount_percent === 25) || coupon.face_value_cents === 2500) && (
+                        {((coupon.is_percentual && coupon.discount_percent === 20) || coupon.face_value_cents === 2000) && (
                           <img 
-                            src="/uploads/25_.png" 
-                            alt="Cartão de 25% de desconto"
+                            src="/uploads/20_.png" 
+                            alt="Cartão de 20% de desconto"
                             className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 lg:w-44 lg:h-44 object-contain"
                           />
                         )}
                         {/* Ícone padrão se não houver imagem específica */}
-                        {!((coupon.is_percentual && (coupon.discount_percent === 50 || coupon.discount_percent === 25)) || 
-                           coupon.face_value_cents === 5000 || coupon.face_value_cents === 2500) && (
+                        {!((coupon.is_percentual && (coupon.discount_percent === 50 || coupon.discount_percent === 20)) || 
+                           coupon.face_value_cents === 5000 || coupon.face_value_cents === 2000) && (
                           <Gift className="w-20 h-20 sm:w-24 sm:h-24 text-white" />
                         )}
                         

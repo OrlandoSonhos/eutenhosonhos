@@ -230,11 +230,11 @@ export const COUPON_TYPES = [
   },
   {
     id: 'cupom25',
-    name: 'Cupom 25% de Desconto',
+    name: 'Cupom 20% de Desconto',
     faceValueCents: 0,
     salePriceCents: 500,
-    description: 'Cupom de 25% de desconto em qualquer compra',
-    discountPercent: 25,
+    description: 'Cupom de 20% de desconto em qualquer compra',
+    discountPercent: 20,
     isPercentual: true
   },
   {

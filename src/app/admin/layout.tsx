@@ -23,6 +23,7 @@ const navigation = [
   { name: 'Categorias', href: '/admin/categorias', icon: TagIcon },
   { name: 'Cartões', href: '/admin/cupons', icon: TicketIcon },
   { name: 'Cartões Desconto', href: '/admin/cupons-desconto', icon: TicketIcon },
+  { name: 'Restrições Cupons', href: '/admin/restricoes-cupons', icon: TicketIcon },
   { name: 'Pedidos', href: '/admin/pedidos', icon: ShoppingBagIcon },
   { name: 'Usuários', href: '/admin/usuarios', icon: UsersIcon },
 ]

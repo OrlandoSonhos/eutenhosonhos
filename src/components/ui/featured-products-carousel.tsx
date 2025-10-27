@@ -113,10 +113,10 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
       ref={carouselRef}
       className={`
           relative w-full 
-          aspect-[16/4] sm:aspect-[16/3] md:aspect-[16/2.5] lg:aspect-[16/2]
-          min-h-[200px] sm:min-h-[250px] md:min-h-[300px] lg:min-h-[350px]
+          aspect-[16/9] xs:aspect-[16/8] sm:aspect-[16/6] md:aspect-[16/4] lg:aspect-[16/3]
+          min-h-[180px] xs:min-h-[200px] sm:min-h-[250px] md:min-h-[300px] lg:min-h-[350px]
           bg-gradient-to-br from-slate-50 via-white to-blue-50/30
-          rounded-2xl 
+          rounded-xl sm:rounded-2xl 
           overflow-hidden 
           border border-white/20
           ${className}
@@ -166,7 +166,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
             fill
             className="object-cover transition-all duration-500 ease-out"
             priority
-            sizes="(max-width: 640px) 125vw, (max-width: 1024px) 112.5vw, 100vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
             style={{
               opacity: 0.12,
               filter: 'brightness(1.2) saturate(0.6) blur(2px) contrast(1.1)',
@@ -199,7 +199,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
         
         {/* Subtle Inner Glow */}
         <div 
-          className="absolute inset-0 rounded-2xl"
+          className="absolute inset-0 rounded-xl sm:rounded-2xl"
           style={{
             boxShadow: 'inset 0 2px 4px rgba(255, 255, 255, 0.8), inset 0 -1px 2px rgba(0, 0, 0, 0.05)'
           }}
@@ -207,10 +207,10 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
       </div>
 
       {/* Content Container */}
-      <div className="relative h-full flex items-center justify-between p-1.5 sm:p-3 md:p-4">
+      <div className="relative h-full flex flex-col sm:flex-row items-center justify-between p-2 xs:p-3 sm:p-4 gap-2 sm:gap-4">
         {/* Product Information */}
         <div 
-          className="flex-1 max-w-[55%] space-y-0.5 sm:space-y-1.5 md:space-y-2"
+          className="flex-1 w-full sm:max-w-[55%] space-y-1 xs:space-y-1.5 sm:space-y-2 text-center sm:text-left"
           style={{
             opacity: isTransitioning ? 0 : 1,
             transform: isTransitioning ? 'translateX(-20px) scale(0.95)' : 'translateX(0) scale(1)',
@@ -218,7 +218,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
           }}
         >
           <h2 
-            className="text-slate-800 font-semibold text-xs sm:text-base md:text-lg leading-tight"
+            className="text-slate-800 font-semibold text-sm xs:text-base sm:text-lg md:text-xl leading-tight"
             style={{
               opacity: isTransitioning ? 0 : 1,
               transform: isTransitioning ? 'translateY(-10px) scale(0.98)' : 'translateY(0) scale(1)',
@@ -230,7 +230,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
           </h2>
           
           <p 
-            className="text-slate-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-1 sm:line-clamp-2"
+            className="text-slate-600 text-xs xs:text-sm sm:text-base leading-relaxed line-clamp-2 sm:line-clamp-2"
             style={{
               opacity: isTransitioning ? 0 : 1,
               transform: isTransitioning ? 'translateY(-8px) scale(0.98)' : 'translateY(0) scale(1)',
@@ -242,7 +242,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
           </p>
           
           <div 
-            className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 md:gap-3"
+            className="flex flex-col xs:flex-row xs:items-center xs:justify-center sm:justify-start gap-1 xs:gap-2 sm:gap-3"
             style={{
               opacity: isTransitioning ? 0 : 1,
               transform: isTransitioning ? 'translateY(-6px) scale(0.98)' : 'translateY(0) scale(1)',
@@ -250,11 +250,11 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
               transitionDelay: isTransitioning ? '0ms' : '300ms'
             }}
           >
-            <span className="text-teal-600 font-bold text-sm sm:text-lg md:text-xl" style={{color: '#2d7d8e'}}>
+            <span className="text-teal-600 font-bold text-base xs:text-lg sm:text-xl md:text-2xl" style={{color: '#2d7d8e'}}>
               {formatCurrency(currentProduct.price_cents)}
             </span>
             <span 
-              className="text-teal-700 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-xs sm:text-sm font-medium"
+              className="text-teal-700 px-2 py-1 rounded-full text-xs xs:text-sm font-medium inline-block"
               style={{
                 color: '#1e5a68',
                 background: 'linear-gradient(135deg, rgba(240, 253, 250, 0.9) 0%, rgba(204, 251, 241, 0.8) 100%)',
@@ -269,7 +269,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
           
           {/* Action Buttons */}
           <div 
-            className="flex flex-col sm:flex-row gap-0.5 sm:gap-2 mt-1 sm:mt-3"
+            className="flex flex-col xs:flex-row gap-2 mt-2 xs:mt-3"
             style={{
               opacity: isTransitioning ? 0 : 1,
               transform: isTransitioning ? 'translateY(-4px) scale(0.98)' : 'translateY(0) scale(1)',
@@ -277,9 +277,9 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
               transitionDelay: isTransitioning ? '0ms' : '400ms'
             }}
           >
-            <Link href={`/produtos/${currentProduct.id}`}>
+            <Link href={`/produtos/${currentProduct.id}`} className="flex-1 xs:flex-none">
               <button 
-                className="w-full sm:w-auto px-1.5 sm:px-3 py-1 sm:py-1.5 text-slate-700 border border-slate-200/60 rounded-lg text-xs sm:text-sm font-medium"
+                className="w-full xs:w-auto px-3 xs:px-4 py-2 text-slate-700 border border-slate-200/60 rounded-lg text-xs xs:text-sm font-medium"
                 style={{
                   background: 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.8) 100%)',
                   backdropFilter: 'blur(10px)',
@@ -301,7 +301,7 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
               </button>
             </Link>
             <button 
-              className="w-full sm:w-auto px-1.5 sm:px-3 py-1 sm:py-1.5 text-white rounded-lg text-xs sm:text-sm font-medium"
+              className="w-full xs:w-auto px-3 xs:px-4 py-2 text-white rounded-lg text-xs xs:text-sm font-medium"
               style={{
                 background: 'linear-gradient(135deg, #2d7d8e 0%, #1e5a68 100%)',
                 boxShadow: '0 4px 6px -1px rgba(45, 125, 142, 0.3), 0 2px 4px -1px rgba(45, 125, 142, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
@@ -325,14 +325,14 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
         
         {/* Product Image */}
         <div 
-          className="flex-1 max-w-[40%] flex justify-center items-center"
+          className="flex-shrink-0 w-full sm:w-auto sm:max-w-[40%] flex justify-center items-center order-first sm:order-last"
           style={{
             opacity: isTransitioning ? 0 : 1,
             transform: isTransitioning ? 'translateX(20px) scale(0.9)' : 'translateX(0) scale(1)',
             transition: 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
           }}
         >
-          <div className="relative w-full aspect-square max-w-[120px] sm:max-w-[180px] md:max-w-[220px] lg:max-w-[260px]">
+          <div className="relative w-20 h-20 xs:w-24 xs:h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48">
             {currentProduct.images && currentProduct.images.length > 0 ? (
               <Image
                 src={currentProduct.images[0]}
@@ -348,12 +348,12 @@ export function FeaturedProductsCarousel({ className = '' }: FeaturedProductsCar
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'scale(1)'
                 }}
-                sizes="(max-width: 640px) 100px, (max-width: 768px) 160px, (max-width: 1024px) 200px, (max-width: 1280px) 240px, 280px"
+                sizes="(max-width: 480px) 80px, (max-width: 640px) 96px, (max-width: 768px) 128px, (max-width: 1024px) 160px, 192px"
                 priority
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-                <Eye className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 xl:w-20 xl:h-20 text-gray-500" />
+              <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center rounded-lg">
+                <Eye className="w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 text-gray-500" />
               </div>
             )}
           </div>

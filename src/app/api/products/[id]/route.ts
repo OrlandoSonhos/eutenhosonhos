@@ -11,6 +11,14 @@ export async function GET(
       where: { 
         id: id,
         active: true 
+      },
+      include: {
+        category: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
       }
     })
 

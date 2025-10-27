@@ -279,7 +279,7 @@ export default function DiscountCouponsPage() {
 
   const resetForm = () => {
     setFormData({
-      discount_percent: 25,
+      discount_percent: 20,
       type: 'PERMANENT_25',
       sale_price_cents: undefined,
       is_active: true,
@@ -289,7 +289,7 @@ export default function DiscountCouponsPage() {
     })
     setEditFormData({
       code: '',
-      discount_percent: 25,
+      discount_percent: 20,
       type: 'PERMANENT_25',
       sale_price_cents: undefined,
       is_active: true,
@@ -359,7 +359,7 @@ export default function DiscountCouponsPage() {
 
   const getTypeBadge = (type: string) => {
     return type === 'PERMANENT_25' 
-      ? <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">25% Permanente</span>
+      ? <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">20% Permanente</span>
       : <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">50% Especial</span>
   }
 
@@ -383,7 +383,7 @@ export default function DiscountCouponsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cartões de Desconto</h1>
-          <p className="text-gray-600">Gerencie cartões de 25% e 50% de desconto</p>
+          <p className="text-gray-600">Gerencie cartões de 20% e 50% de desconto</p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -427,7 +427,7 @@ export default function DiscountCouponsPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
             >
               <option value="">Todos</option>
-              <option value="PERMANENT_25">25% Permanente</option>
+              <option value="PERMANENT_25">20% Permanente</option>
               <option value="SPECIAL_50">50% Especial</option>
             </select>
           </div>
@@ -647,12 +647,12 @@ export default function DiscountCouponsPage() {
                       setEditFormData(prev => ({ 
                         ...prev, 
                         type,
-                        discount_percent: type === 'PERMANENT_25' ? 25 : 50
+                        discount_percent: type === 'PERMANENT_25' ? 20 : 50
                       }))
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   >
-                    <option value="PERMANENT_25">25% Permanente</option>
+                    <option value="PERMANENT_25">20% Permanente</option>
                     <option value="SPECIAL_50">50% Especial</option>
                   </select>
                 </div>
@@ -777,12 +777,12 @@ export default function DiscountCouponsPage() {
                       setEditFormData(prev => ({ 
                         ...prev, 
                         type,
-                        discount_percent: type === 'PERMANENT_25' ? 25 : 50
+                        discount_percent: type === 'PERMANENT_25' ? 20 : 50
                       }))
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-primary"
                   >
-                    <option value="PERMANENT_25">25% Permanente</option>
+                    <option value="PERMANENT_25">20% Permanente</option>
                     <option value="SPECIAL_50">50% Especial</option>
                   </select>
                 </div>

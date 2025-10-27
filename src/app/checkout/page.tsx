@@ -13,6 +13,7 @@ interface CartItem {
   price_cents: number
   quantity: number
   stock: number
+  category_id?: string
 }
 
 interface AppliedCoupon {
@@ -28,6 +29,12 @@ interface AppliedDiscountCoupon {
   discount_amount: number
   discount_percent: number
   type: 'PERMANENT_25' | 'SPECIAL_50'
+  selected_product?: {
+    id: string
+    title: string
+    price_cents: number
+    quantity: number
+  }
 }
 
 interface ShippingOption {
@@ -54,6 +61,7 @@ export default function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const [appliedDiscountCoupon, setAppliedDiscountCoupon] = useState<AppliedDiscountCoupon | null>(null)
   const [discountCouponCode, setDiscountCouponCode] = useState('')
+  const [selectedProductForCoupon, setSelectedProductForCoupon] = useState<string>('')
   const [validatingCoupon, setValidatingCoupon] = useState(false)
   const [couponError, setCouponError] = useState('')
   const [processingPayment, setProcessingPayment] = useState(false)
@@ -247,6 +255,11 @@ export default function CheckoutPage() {
       return
     }
 
+    if (!selectedProductForCoupon) {
+      setCouponError('Selecione um produto para aplicar o cupom')
+      return
+    }
+
     setValidatingCoupon(true)
     setCouponError('')
 
@@ -258,7 +271,9 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify({
           code: discountCouponCode.trim(),
-          total_cents: getSubtotal()
+          total_cents: getSubtotal(),
+          selected_product_id: selectedProductForCoupon,
+          cart_items: cartItems
         })
       })
 
@@ -270,12 +285,14 @@ export default function CheckoutPage() {
       }
 
       setAppliedDiscountCoupon({
-        code: data.code,
+        code: data.coupon.code,
         discount_amount: data.discount_amount,
-        discount_percent: data.discount_percent,
-        type: data.type
+        discount_percent: data.coupon.discount_percent,
+        type: data.coupon.type,
+        selected_product: data.selected_product
       })
       setDiscountCouponCode('')
+      setSelectedProductForCoupon('')
       setCouponError('')
     } catch (error) {
       console.error('Erro ao validar cupom:', error)
@@ -288,6 +305,7 @@ export default function CheckoutPage() {
   const removeDiscountCoupon = () => {
     setAppliedDiscountCoupon(null)
     setDiscountCouponCode('')
+    setSelectedProductForCoupon('')
     setCouponError('')
   }
 
@@ -304,6 +322,7 @@ export default function CheckoutPage() {
         items: cartItems,
         couponCode: appliedCoupon?.code,
         discountCouponCode: appliedDiscountCoupon?.code,
+        selectedProductForCoupon: appliedDiscountCoupon?.selected_product?.id,
         subtotal: getSubtotal(),
         shipping: getShipping(),
         discount: getDiscount(),
@@ -595,6 +614,9 @@ export default function CheckoutPage() {
                           Cupom aplicado: {appliedDiscountCoupon.code}
                         </p>
                         <p className="text-sm text-green-600">
+                          Produto: {appliedDiscountCoupon.selected_product?.title}
+                        </p>
+                        <p className="text-sm text-green-600">
                           Desconto: {formatCurrency(appliedDiscountCoupon.discount_amount)} ({appliedDiscountCoupon.discount_percent}%)
                         </p>
                       </div>
@@ -609,6 +631,25 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Selecione o produto para aplicar o cupom:
+                    </label>
+                    <select
+                      value={selectedProductForCoupon}
+                      onChange={(e) => setSelectedProductForCoupon(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-transparent"
+                      disabled={validatingCoupon}
+                    >
+                      <option value="">Escolha um produto...</option>
+                      {cartItems.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.title} - {formatCurrency(item.price_cents * item.quantity)} (Qtd: {item.quantity})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="flex space-x-2">
                     <input
                       type="text"
@@ -620,7 +661,7 @@ export default function CheckoutPage() {
                     />
                     <button
                       onClick={validateDiscountCoupon}
-                      disabled={validatingCoupon || !discountCouponCode.trim()}
+                      disabled={validatingCoupon || !discountCouponCode.trim() || !selectedProductForCoupon}
                       className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-brand-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {validatingCoupon ? 'Validando...' : 'Aplicar'}
@@ -635,7 +676,7 @@ export default function CheckoutPage() {
                   )}
                   
                   <p className="text-sm text-gray-500">
-                    Insira um código de cupom válido para obter desconto adicional
+                    O cupom será aplicado apenas ao produto selecionado. Para múltiplos produtos, você precisará de múltiplos cupons.
                   </p>
                 </div>
               )}
@@ -677,7 +718,12 @@ export default function CheckoutPage() {
 
                 {appliedDiscountCoupon && (
                   <div className="flex justify-between text-green-600">
-                    <span>Cupom de Desconto ({appliedDiscountCoupon.code})</span>
+                    <div className="flex flex-col">
+                      <span>Cupom de Desconto ({appliedDiscountCoupon.code})</span>
+                      <span className="text-xs text-gray-500">
+                        Aplicado em: {appliedDiscountCoupon.selected_product?.title}
+                      </span>
+                    </div>
                     <span className="font-medium">-{formatCurrency(appliedDiscountCoupon.discount_amount)}</span>
                   </div>
                 )}

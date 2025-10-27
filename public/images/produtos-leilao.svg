@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#8B5CF6" stroke="#7C3AED" stroke-width="2"/>
+  
+  <!-- Auction hammer/gavel -->
+  <rect x="20" y="28" width="16" height="6" rx="3" fill="#FFFFFF"/>
+  <rect x="28" y="34" width="4" height="12" rx="2" fill="#FFFFFF"/>
+  <circle cx="30" cy="48" r="4" fill="#FFFFFF"/>
+  
+  <!-- Bidding arrows pointing up -->
+  <path d="M42 38L46 34L50 38" stroke="#FFD700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <line x1="46" y1="34" x2="46" y2="44" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Dollar sign -->
+  <path d="M14 20C14 20 16 18 18 20C20 22 20 24 18 26C16 28 14 26 14 26" stroke="#FFD700" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <line x1="16" y1="18" x2="16" y2="28" stroke="#FFD700" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -15,6 +15,10 @@ interface Product {
   images: string[]
   active: boolean
   created_at: string
+  category?: {
+    id: string
+    name: string
+  }
 }
 
 export default function ProductDetailPage() {
@@ -76,7 +80,8 @@ export default function ProductDetailPage() {
           title: product.title,
           price_cents: product.price_cents,
           quantity: quantity,
-          stock: product.stock
+          stock: product.stock,
+          category_id: product.category?.id
         })
       }
       

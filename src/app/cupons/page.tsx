@@ -36,10 +36,10 @@ export default function DiscountCardsPage() {
         setCouponTypes([
           {
             id: '1',
-            name: 'Cartão 25% de Desconto',
+            name: 'Cartão 20% de Desconto',
             faceValueCents: 2500,
             salePriceCents: 2000,
-            description: 'Cartão de desconto de 25%'
+            description: 'Cartão de desconto de 20%'
           },
           {
             id: '2',
@@ -137,11 +137,11 @@ export default function DiscountCardsPage() {
                       className="w-full h-52 object-cover rounded-t-xl"
                     />
                   </div>
-                ) : coupon.isPercentual && coupon.discountPercent === 25 ? (
+                ) : coupon.isPercentual && coupon.discountPercent === 20 ? (
                   <div className="relative overflow-hidden">
                     <img 
-                      src="/uploads/25_.png" 
-                      alt="Cartão de 25% de desconto"
+                      src="/uploads/20_.png" 
+                      alt="Cartão de 20% de desconto"
                       className="w-full h-52 object-cover rounded-t-xl"
                     />
                   </div>
@@ -192,10 +192,15 @@ export default function DiscountCardsPage() {
                           {coupon.discountPercent}% de desconto
                         </div>
                         <div className="text-lg text-gray-600">
-                          por {formatCurrency(coupon.salePriceCents)}
+                          por apenas {formatCurrency(coupon.salePriceCents)}
                         </div>
                         <div className="text-sm text-gray-500 mt-2">
-                          Use em qualquer compra
+                          {coupon.discountPercent === 20 
+                            ? "Válido apenas na categoria 'Oferta do dia'"
+                            : coupon.discountPercent === 50
+                            ? "Válido apenas na categoria 'Produtos de leilão' em datas específicas"
+                            : "Use em qualquer compra"
+                          }
                         </div>
                       </div>
                       

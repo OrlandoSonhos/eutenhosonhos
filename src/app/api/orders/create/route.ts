@@ -17,6 +17,7 @@ const createOrderSchema = z.object({
   })),
   couponCode: z.string().optional(),
   discountCouponCode: z.string().optional(),
+  selectedProductForCoupon: z.string().optional(),
   subtotal: z.number(),
   shipping: z.number(),
   discount: z.number(),
@@ -129,7 +130,9 @@ export async function POST(request: NextRequest) {
           },
           body: JSON.stringify({
             code: orderData.discountCouponCode,
-            total_amount: orderData.subtotal
+            total_amount: orderData.subtotal,
+            cart_items: orderData.items,
+            selected_product_id: orderData.selectedProductForCoupon
           })
         })
 

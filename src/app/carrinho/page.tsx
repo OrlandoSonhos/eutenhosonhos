@@ -11,6 +11,7 @@ interface CartItem {
   price_cents: number
   quantity: number
   stock: number
+  category_id?: string
 }
 
 export default function CartPage() {

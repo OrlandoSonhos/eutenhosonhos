@@ -6,7 +6,16 @@ import { z } from 'zod'
 
 const validateCouponSchema = z.object({
   code: z.string().min(1, 'Código do cartão é obrigatório'),
-  total_cents: z.number().min(1, 'Total do pedido deve ser maior que zero')
+  total_cents: z.number().min(1, 'Total do pedido deve ser maior que zero'),
+  selected_product_id: z.string().min(1, 'Produto específico deve ser selecionado para aplicar o cupom'),
+  cart_items: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    price_cents: z.number(),
+    quantity: z.number(),
+    stock: z.number(),
+    category_id: z.string().optional()
+  })).optional()
 })
 
 // POST - Validar cupom de desconto
@@ -22,15 +31,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { code, total_cents } = validateCouponSchema.parse(body)
+    const { code, total_cents, selected_product_id, cart_items } = validateCouponSchema.parse(body)
     const userId = (session as any).user.id
 
-    // Buscar cupons comprados pelo usuário - Fix: Usar prisma diretamente para evitar problemas de tipagem na Vercel
+    console.log(`[COUPON_VALIDATION] Iniciando validação de cupom:`, {
+      coupon_code: code,
+      selected_product_id: selected_product_id,
+      cart_items_count: cart_items?.length || 0,
+      user_id: userId,
+      timestamp: new Date().toISOString()
+    })
+
+    // Verificar se o produto selecionado existe no carrinho
+    const selectedProduct = cart_items?.find(item => item.id === selected_product_id)
+    if (!selectedProduct) {
+      return NextResponse.json(
+        { 
+          valid: false, 
+          error: 'Produto selecionado não encontrado no carrinho' 
+        },
+        { status: 400 }
+      )
+    }
+
+    // Buscar cupons comprados pelo usuário - verificar uso único
     const couponPurchases = await prisma.discountCouponPurchase.findMany({
       where: { 
         buyer_id: userId,
-        code: code.toUpperCase(),
-        used_at: null // Cupom não usado
+        code: code.toUpperCase()
       },
       include: {
         discount_coupon: true
@@ -41,13 +69,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           valid: false, 
-          error: 'Cartão não encontrado ou já utilizado' 
+          error: 'Cartão não encontrado' 
         },
         { status: 400 }
       )
     }
 
     const couponPurchase = couponPurchases[0]
+
+    // Verificar se o cupom já foi usado (uso único)
+    if (couponPurchase.used_at) {
+      return NextResponse.json(
+        { 
+          valid: false, 
+          error: 'Este cartão já foi utilizado e só pode ser usado uma vez' 
+        },
+        { status: 400 }
+      )
+    }
+
     const coupon = couponPurchase.discount_coupon
 
     // Verificar se o cupom está ativo
@@ -95,9 +135,112 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calcular desconto
-    const discount_amount = Math.floor((total_cents * coupon.discount_percent) / 100)
+    // Verificar restrições por categoria
+    if (cart_items && cart_items.length > 0) {
+      // Buscar restrições do cupom
+      const couponRestrictions = await prisma.couponCategoryRestriction.findMany({
+        where: {
+          coupon_type: coupon.type
+        },
+        include: { category: true }
+      })
+
+      console.log(`[COUPON_VALIDATION] Verificando restrições para cupom ${coupon.type}:`, {
+        coupon_id: coupon.id,
+        restrictions_count: couponRestrictions.length,
+        cart_items_count: cart_items.length,
+        user_id: userId
+      })
+
+      if (couponRestrictions.length > 0) {
+        // Extrair categorias dos itens do carrinho
+        const cartCategoryIds = cart_items
+          .map(item => item.category_id)
+          .filter(Boolean) as string[]
+
+        console.log(`[COUPON_VALIDATION] Categorias no carrinho:`, {
+          category_ids: cartCategoryIds,
+          cart_items: cart_items.map(item => ({
+            id: item.id,
+            title: item.title,
+            category_id: item.category_id
+          }))
+        })
+
+        // Verificar restrições
+        for (const restriction of couponRestrictions) {
+          console.log(`[COUPON_VALIDATION] Verificando restrição:`, {
+            restriction_type: restriction.restriction_type,
+            category_id: restriction.category_id,
+            category_name: restriction.category.name
+          })
+
+          if (restriction.restriction_type === 'ALLOWED') {
+            // Cupom pode ser usado nesta categoria específica
+            if (!cartCategoryIds.includes(restriction.category_id)) {
+              console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - ALLOWED:`, {
+                allowed_category: restriction.category.name,
+                cart_categories: cartCategoryIds,
+                user_id: userId
+              })
+              
+              return NextResponse.json(
+                { 
+                  valid: false, 
+                  error: `Este cartão só pode ser usado em produtos da categoria: ${restriction.category.name}` 
+                },
+                { status: 400 }
+              )
+            }
+          } else if (restriction.restriction_type === 'FORBIDDEN') {
+            // Cupom não pode ser usado nesta categoria específica
+            if (cartCategoryIds.includes(restriction.category_id)) {
+              console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - FORBIDDEN:`, {
+                forbidden_category: restriction.category.name,
+                cart_categories: cartCategoryIds,
+                user_id: userId
+              })
+              
+              return NextResponse.json(
+                { 
+                  valid: false, 
+                  error: `Este cartão não pode ser usado em produtos da categoria: ${restriction.category.name}` 
+                },
+                { status: 400 }
+              )
+            }
+          }
+        }
+
+        console.log(`[COUPON_VALIDATION] Todas as restrições de categoria foram atendidas`, {
+          coupon_type: coupon.type,
+          user_id: userId
+        })
+      } else {
+        console.log(`[COUPON_VALIDATION] Nenhuma restrição de categoria encontrada para o cupom ${coupon.type}`)
+      }
+    }
+
+    // Calcular desconto apenas para o produto selecionado
+    const product_total_cents = selectedProduct.price_cents * selectedProduct.quantity
+    const discount_amount = Math.floor((product_total_cents * coupon.discount_percent) / 100)
     const final_total = total_cents - discount_amount
+
+    console.log(`[COUPON_VALIDATION] Validação concluída com sucesso:`, {
+      coupon_type: coupon.type,
+      discount_percent: coupon.discount_percent,
+      selected_product: {
+        id: selectedProduct.id,
+        title: selectedProduct.title,
+        price_cents: selectedProduct.price_cents,
+        quantity: selectedProduct.quantity,
+        total_cents: product_total_cents
+      },
+      discount_amount: discount_amount,
+      total_cents: total_cents,
+      user_id: userId,
+      timestamp: new Date().toISOString()
+    })
 
     return NextResponse.json({
       valid: true,
@@ -106,6 +249,12 @@ export async function POST(request: NextRequest) {
         code: couponPurchase.code,
         discount_percent: coupon.discount_percent,
         type: coupon.type
+      },
+      selected_product: {
+        id: selectedProduct.id,
+        title: selectedProduct.title,
+        price_cents: selectedProduct.price_cents,
+        quantity: selectedProduct.quantity
       },
       discount_amount,
       final_total,

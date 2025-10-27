@@ -99,9 +99,9 @@ export async function POST(request: NextRequest) {
     const validatedData = createDiscountCouponSchema.parse(body)
 
     // Validações específicas por tipo
-    if (validatedData.type === 'PERMANENT_25' && validatedData.discount_percent !== 25) {
+    if (validatedData.type === 'PERMANENT_25' && validatedData.discount_percent !== 20) {
       return NextResponse.json(
-        { error: 'Cupons permanentes devem ter 25% de desconto' },
+        { error: 'Cupons permanentes devem ter 20% de desconto' },
         { status: 400 }
       )
     }

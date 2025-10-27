@@ -221,6 +221,7 @@ model Category {
 
   // Relations
   products Product[]
+  coupon_restrictions CouponCategoryRestriction[]
 
   @@map("categories")
 }
@@ -276,4 +277,26 @@ model DiscountCouponPurchase {
   @@index([discount_coupon_id])
   @@index([code])
   @@map("discount_coupon_purchases")
+}
+
+model CouponCategoryRestriction {
+  id                  String             @id @default(cuid())
+  coupon_type         DiscountCouponType // Tipo do cupom (PERMANENT_25, SPECIAL_50)
+  category_id         String             // ID da categoria
+  restriction_type    RestrictionType    // Tipo de restrição (ALLOWED, FORBIDDEN)
+  created_at          DateTime           @default(now())
+  updated_at          DateTime           @updatedAt
+
+  // Relations
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@unique([coupon_type, category_id])
+  @@index([coupon_type])
+  @@index([category_id])
+  @@map("coupon_category_restrictions")
+}
+
+enum RestrictionType {
+  ALLOWED   // Cupom pode ser usado nesta categoria
+  FORBIDDEN // Cupom não pode ser usado nesta categoria
 }

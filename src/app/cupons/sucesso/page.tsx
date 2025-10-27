@@ -1,7 +1,21 @@
+'use client'
+
 import Link from "next/link"
 import { CheckCircle } from "lucide-react"
+import { useEffect } from "react"
+import { useToast } from "@/contexts/ToastContext"
 
 export default function CouponSuccessPage() {
+  const { showSuccessToast } = useToast()
+
+  useEffect(() => {
+    // Exibir toast notification de aprovação
+    showSuccessToast(
+      "Compra aprovada com sucesso! Verifique seu e-mail ou acesse 'Meus Cartões'/'Meus Pedidos'",
+      5000 // 5 segundos
+    )
+  }, [showSuccessToast])
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
