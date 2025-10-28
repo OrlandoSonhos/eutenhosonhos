@@ -230,31 +230,115 @@ export async function validateCEP(cep: string): Promise<{ valid: boolean; addres
       return { valid: false, error: 'CEP deve ter 8 dígitos' }
     }
 
-    const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`)
-    const data = await response.json()
-
-    if (data.erro) {
-      return { valid: false, error: 'CEP não encontrado' }
+    // Validação básica de formato de CEP brasileiro
+    if (!isValidCEPFormat(cleanCEP)) {
+      return { valid: false, error: 'CEP inválido' }
     }
 
-    return {
-      valid: true,
-      address: {
-        cep: data.cep,
-        logradouro: data.logradouro,
-        complemento: data.complemento,
-        bairro: data.bairro,
-        localidade: data.localidade,
-        uf: data.uf,
-        ibge: data.ibge,
-        gia: data.gia,
-        ddd: data.ddd,
-        siafi: data.siafi
+    // Criar AbortController para timeout personalizado
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 segundos
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCEP}/json/`, {
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      })
+      
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
       }
+
+      const data = await response.json()
+
+      if (data.erro) {
+        return { valid: false, error: 'CEP não encontrado' }
+      }
+
+      return {
+        valid: true,
+        address: {
+          cep: data.cep,
+          logradouro: data.logradouro,
+          complemento: data.complemento,
+          bairro: data.bairro,
+          localidade: data.localidade,
+          uf: data.uf,
+          ibge: data.ibge,
+          gia: data.gia,
+          ddd: data.ddd,
+          siafi: data.siafi
+        }
+      }
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId)
+      
+      // Se foi timeout ou erro de conexão, usar fallback
+      if (fetchError.name === 'AbortError' || fetchError.code === 'UND_ERR_CONNECT_TIMEOUT') {
+        console.warn('Timeout na API ViaCEP, usando validação fallback para CEP:', cleanCEP)
+        return validateCEPFallback(cleanCEP)
+      }
+      
+      throw fetchError
     }
   } catch (error) {
     console.error('Erro ao validar CEP:', error)
+    
+    // Em caso de erro, tentar validação fallback
+    const cleanCEP = cep.replace(/\D/g, '')
+    if (cleanCEP.length === 8 && isValidCEPFormat(cleanCEP)) {
+      return validateCEPFallback(cleanCEP)
+    }
+    
     return { valid: false, error: 'Erro ao validar CEP. Tente novamente.' }
+  }
+}
+
+/**
+ * Validação básica de formato de CEP
+ */
+function isValidCEPFormat(cep: string): boolean {
+  // CEP deve ter 8 dígitos e não pode ser sequencial (como 00000000, 11111111, etc.)
+  if (cep.length !== 8) return false
+  
+  // Verificar se não é uma sequência de números iguais
+  const firstDigit = cep[0]
+  if (cep.split('').every(digit => digit === firstDigit)) return false
+  
+  // Verificar se não é 00000000
+  if (cep === '00000000') return false
+  
+  return true
+}
+
+/**
+ * Validação fallback de CEP (quando ViaCEP não responde)
+ */
+function validateCEPFallback(cep: string): { valid: boolean; address?: any; error?: string } {
+  if (!isValidCEPFormat(cep)) {
+    return { valid: false, error: 'CEP inválido' }
+  }
+
+  // Retornar como válido com endereço genérico
+  // Isso permite que o cálculo de frete continue funcionando
+  return {
+    valid: true,
+    address: {
+      cep: formatCEP(cep),
+      logradouro: '',
+      complemento: '',
+      bairro: '',
+      localidade: 'Cidade não identificada',
+      uf: 'XX',
+      ibge: '',
+      gia: '',
+      ddd: '',
+      siafi: ''
+    }
   }
 }
 

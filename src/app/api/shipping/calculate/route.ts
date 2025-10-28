@@ -16,10 +16,16 @@ export async function POST(request: NextRequest) {
     // Validar CEP
     const cepValidation = await validateCEP(cep)
     if (!cepValidation.valid) {
+      console.error('Erro na validação de CEP:', cepValidation.error)
       return NextResponse.json(
-        { error: cepValidation.error },
+        { error: cepValidation.error || 'CEP inválido' },
         { status: 400 }
       )
+    }
+
+    // Log para debug quando usar fallback
+    if (cepValidation.address?.localidade === 'Cidade não identificada') {
+      console.warn('Usando validação fallback para CEP:', cep)
     }
 
     // Calcular peso total e buscar produtos
@@ -90,10 +96,33 @@ export async function POST(request: NextRequest) {
       }))
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao calcular frete:', error)
+    
+    // Verificar se é erro de timeout específico
+    if (error?.code === 'UND_ERR_CONNECT_TIMEOUT' || error?.name === 'AbortError') {
+      return NextResponse.json(
+        { 
+          error: 'Serviço de CEP temporariamente indisponível. Tente novamente em alguns instantes.',
+          fallback: true
+        },
+        { status: 503 }
+      )
+    }
+    
+    // Verificar se é erro de rede
+    if (error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT') {
+      return NextResponse.json(
+        { 
+          error: 'Problema de conexão com o serviço de CEP. Verifique sua conexão e tente novamente.',
+          fallback: true
+        },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro interno do servidor. Tente novamente.' },
       { status: 500 }
     )
   }
