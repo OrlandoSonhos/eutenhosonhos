@@ -200,24 +200,13 @@ export async function POST(request: NextRequest) {
     
     if (discountCoupon && orderData.discountCouponCode) {
       try {
-        const response = await fetch(`${process.env.NEXTAUTH_URL}/api/apply-discount-coupon`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(session as any).accessToken || 'internal'}`
-          },
-          body: JSON.stringify({
-            code: orderData.discountCouponCode,
-            order_id: order.id
-          })
-        })
-
-        if (response.ok) {
-          const discountResult = await response.json()
+        // Aplicar cupom de desconto diretamente (função interna)
+        const discountResult = await applyDiscountCouponInternal(orderData.discountCouponCode, order.id, userId)
+        if (discountResult.success) {
           finalDiscountCents = discountResult.discount_cents || 0
-          console.log('✅ Cupom validado - desconto:', discountResult.discount, 'finalDiscountCents:', finalDiscountCents);
+          console.log('✅ Cupom de desconto aplicado - desconto:', finalDiscountCents);
         } else {
-          console.error('Erro ao aplicar cupom de desconto:', await response.text())
+          console.error('Erro ao aplicar cupom de desconto:', discountResult.error)
         }
       } catch (error) {
         console.error('Erro ao aplicar cupom de desconto:', error)
@@ -296,5 +285,90 @@ export async function POST(request: NextRequest) {
       { error: 'Erro interno do servidor' },
       { status: 500 }
     )
+  }
+}
+
+// Função interna para aplicar cupom de desconto
+async function applyDiscountCouponInternal(code: string, orderId: string, userId: string) {
+  try {
+    // Verificar se o pedido existe e pertence ao usuário
+    const order = await prismaWithRetry.order.findFirst({
+      where: {
+        id: orderId,
+        user_id: userId,
+        status: 'PENDING'
+      }
+    })
+
+    if (!order) {
+      return { success: false, error: 'Pedido não encontrado ou não pode ser modificado' }
+    }
+
+    // Verificar se já existe um desconto aplicado neste pedido
+    if (order.discount_cents > 0) {
+      return { success: false, error: 'Já existe um cartão aplicado neste pedido' }
+    }
+
+    // Buscar cupom comprado pelo usuário
+    const coupon = await prismaWithRetry.coupon.findFirst({
+      where: {
+        code: code.toUpperCase(),
+        buyer_id: userId,
+        status: 'AVAILABLE'
+      }
+    })
+
+    if (!coupon) {
+      return { success: false, error: 'Cartão não encontrado ou já foi usado' }
+    }
+
+    // Verificar se o cupom está disponível
+    if (coupon.status !== 'AVAILABLE') {
+      return { success: false, error: 'Cartão não está disponível' }
+    }
+
+    // Verificar se o cupom expirou
+    const now = new Date()
+    if (coupon.expires_at && now > coupon.expires_at) {
+      return { success: false, error: 'Cartão expirado' }
+    }
+
+    // Calcular desconto baseado no valor do cupom
+    const discount_amount = coupon.face_value_cents
+    const new_total = Math.max(0, order.total_cents - discount_amount)
+
+    // Aplicar o cupom em uma transação
+    await prismaWithRetry.$transaction(async (tx) => {
+      // Marcar o cupom como usado
+      await tx.coupon.update({
+        where: { id: coupon.id },
+        data: {
+          status: 'USED',
+          used_at: new Date(),
+          used_in_order_id: orderId,
+          updated_at: new Date()
+        }
+      })
+
+      // Atualizar o total do pedido
+      await tx.order.update({
+        where: { id: orderId },
+        data: {
+          total_cents: new_total,
+          discount_cents: discount_amount
+        }
+      })
+    })
+
+    return {
+      success: true,
+      discount_cents: discount_amount,
+      new_total,
+      savings: discount_amount
+    }
+
+  } catch (error) {
+    console.error('Erro ao aplicar cupom de desconto:', error)
+    return { success: false, error: 'Erro interno do servidor' }
   }
 }
