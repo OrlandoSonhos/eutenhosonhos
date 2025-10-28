@@ -125,10 +125,38 @@ export async function validateDiscountCoupon({
       }
     }
 
+    // Buscar o produto selecionado no banco de dados para obter a categoria
+    const productFromDb = await prisma.product.findUnique({
+      where: { id: selected_product_id },
+      include: { category: true }
+    })
+
+    if (!productFromDb) {
+      return {
+        valid: false,
+        error: 'Produto selecionado não encontrado'
+      }
+    }
+
+    if (!productFromDb.category_id) {
+      console.log(`[COUPON_VALIDATION] ERRO - Produto selecionado sem categoria:`, {
+        product_id: productFromDb.id,
+        product_title: productFromDb.title,
+        user_id: user_id
+      })
+      
+      return {
+        valid: false,
+        error: 'Produto selecionado não possui categoria definida'
+      }
+    }
+
     // Verificar restrições por categoria do produto selecionado
-    const couponRestrictions = await prisma.couponCategoryRestriction.findMany({
+    const couponRestrictions = await prisma.couponRestriction.findMany({
       where: {
-        coupon_type: coupon.type
+        coupon_id: coupon.id,
+        selected_product_category: productFromDb.category_id,
+        user_id: user_id
       },
       include: { category: true }
     })
@@ -136,31 +164,18 @@ export async function validateDiscountCoupon({
     console.log(`[COUPON_VALIDATION] Verificando restrições para cupom ${coupon.type}:`, {
       coupon_id: coupon.id,
       restrictions_count: couponRestrictions.length,
-      selected_product_id: selectedProduct.id,
-      selected_product_category: selectedProduct.category_id,
+      selected_product_id: productFromDb.id,
+      selected_product_category: productFromDb.category_id,
       user_id: user_id
     })
 
     if (couponRestrictions.length > 0) {
       // Obter a categoria do produto selecionado
-      const selectedProductCategoryId = selectedProduct.category_id
-
-      if (!selectedProductCategoryId) {
-        console.log(`[COUPON_VALIDATION] ERRO - Produto selecionado sem categoria:`, {
-          product_id: selectedProduct.id,
-          product_title: selectedProduct.title,
-          user_id: user_id
-        })
-        
-        return {
-          valid: false,
-          error: 'Produto selecionado não possui categoria definida'
-        }
-      }
+      const selectedProductCategoryId = productFromDb.category_id
 
       console.log(`[COUPON_VALIDATION] Categoria do produto selecionado:`, {
-        product_id: selectedProduct.id,
-        product_title: selectedProduct.title,
+        product_id: productFromDb.id,
+        product_title: productFromDb.title,
         category_id: selectedProductCategoryId
       })
 
@@ -227,7 +242,8 @@ export async function validateDiscountCoupon({
     const discount_amount = Math.floor((product_total_cents * coupon.discount_percent) / 100)
     const final_total = total_cents - discount_amount
 
-    console.log(`[COUPON_VALIDATION] Validação concluída com sucesso:`, {
+    console.log(`[COUPON_VALIDATION] SUCESSO - Cupom validado:`, {
+      coupon_code: couponPurchase.code,
       coupon_type: coupon.type,
       discount_percent: coupon.discount_percent,
       selected_product: {
