@@ -28,18 +28,18 @@ export async function POST(request: NextRequest) {
     let hasFreeShipping = false
     
     for (const item of items) {
+      const productId = item.productId || item.id
       const product = await prismaWithRetry.product.findUnique({
-        where: { id: item.productId }
+        where: { id: productId }
       })
 
       if (!product) {
         return NextResponse.json(
-          { error: `Produto ${item.productId} não encontrado` },
+          { error: `Produto ${productId} não encontrado` },
           { status: 404 }
         )
       }
 
-      // Verificar se algum produto tem frete grátis
       if (product.free_shipping) {
         hasFreeShipping = true
       }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
       totalValue += (product.price_cents / 100) * item.quantity
     }
 
-    // Se algum produto tem frete grátis, retornar frete zero
+    // Se algum produto tem frete grátis, retornar apenas frete grátis
     if (hasFreeShipping) {
       return NextResponse.json({
         success: true,
