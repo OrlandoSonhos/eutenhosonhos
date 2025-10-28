@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { validateCoupon, applyCoupon } from '@/lib/coupons'
+import { validateDiscountCoupon } from '@/lib/discount-coupons'
 import { createOrderPreference } from '@/lib/mercadopago'
 import { formatCurrency } from '@/lib/utils'
 import { z } from 'zod'
@@ -121,37 +122,22 @@ export async function POST(request: NextRequest) {
     // Validar cupom de desconto se fornecido
     let discountCoupon = null
     if (orderData.discountCouponCode) {
-      try {
-        const response = await fetch(`${process.env.NEXTAUTH_URL}/api/validate-discount-coupon`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(session as any).accessToken || 'internal'}`
-          },
-          body: JSON.stringify({
-            code: orderData.discountCouponCode,
-            total_amount: orderData.subtotal,
-            cart_items: orderData.items,
-            selected_product_id: orderData.selectedProductForCoupon
-          })
-        })
+      const discountCouponValidation = await validateDiscountCoupon({
+        code: orderData.discountCouponCode,
+        total_cents: orderData.subtotal,
+        cart_items: orderData.items,
+        selected_product_id: orderData.selectedProductForCoupon!,
+        user_id: userId
+      })
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          return NextResponse.json(
-            { error: errorData.error || 'Cupom de desconto inválido' },
-            { status: 400 }
-          )
-        }
-
-        discountCoupon = await response.json()
-      } catch (error) {
-        console.error('Erro ao validar cupom de desconto:', error)
+      if (!discountCouponValidation.valid) {
         return NextResponse.json(
-          { error: 'Erro ao validar cupom de desconto' },
-          { status: 500 }
+          { error: discountCouponValidation.error },
+          { status: 400 }
         )
       }
+
+      discountCoupon = discountCouponValidation
     }
 
     // Calcular o valor final (inicialmente igual ao total, será atualizado se houver cupom)
