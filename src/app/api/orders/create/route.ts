@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prismaWithRetry } from '@/lib/prisma-utils'
 import { validateCoupon, applyCoupon } from '@/lib/coupons'
+
+
 import { validateDiscountCoupon } from '@/lib/discount-coupons'
 import { createOrderPreference } from '@/lib/mercadopago'
 import { formatCurrency } from '@/lib/utils'
@@ -198,10 +200,10 @@ export async function POST(request: NextRequest) {
     console.log('🎫 Cupom recebido:', orderData.discountCouponCode);
     console.log('💰 Valores recebidos do frontend:', { subtotal: orderData.subtotal, shipping: orderData.shipping, discount: orderData.discount, total: orderData.total });
     
-    if (discountCoupon && orderData.discountCouponCode) {
+    if (discountCoupon && orderData.discountCouponCode && orderData.selectedProductForCoupon) {
       try {
         // Aplicar cupom de desconto diretamente (função interna)
-        const discountResult = await applyDiscountCouponInternal(orderData.discountCouponCode, order.id, userId)
+        const discountResult = await applyDiscountCouponInternal(orderData.discountCouponCode, order.id, userId, orderData.selectedProductForCoupon)
         if (discountResult.success) {
           finalDiscountCents = discountResult.discount_cents || 0
           console.log('✅ Cupom de desconto aplicado - desconto:', finalDiscountCents);
@@ -289,7 +291,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Função interna para aplicar cupom de desconto
-async function applyDiscountCouponInternal(code: string, orderId: string, userId: string) {
+async function applyDiscountCouponInternal(code: string, orderId: string, userId: string, selectedProductId: string) {
   try {
     // Verificar se o pedido existe e pertence ao usuário
     const order = await prismaWithRetry.order.findFirst({
@@ -297,8 +299,15 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
         id: orderId,
         user_id: userId,
         status: 'PENDING'
+      },
+      include: {
+        order_items: {
+          include: {
+            product: true
+          }
+        }
       }
-    })
+    }) as any
 
     if (!order) {
       return { success: false, error: 'Pedido não encontrado ou não pode ser modificado' }
@@ -309,44 +318,68 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
       return { success: false, error: 'Já existe um cartão aplicado neste pedido' }
     }
 
-    // Buscar cupom comprado pelo usuário
-    const coupon = await prismaWithRetry.coupon.findFirst({
-      where: {
-        code: code.toUpperCase(),
+    // Buscar cupom de desconto comprado pelo usuário
+    const couponPurchase = await prismaWithRetry.discountCouponPurchase.findFirst({
+      where: { 
         buyer_id: userId,
-        status: 'AVAILABLE'
+        code: code.toUpperCase()
+      },
+      include: {
+        discount_coupon: true
       }
-    })
+    }) as any
 
-    if (!coupon) {
-      return { success: false, error: 'Cartão não encontrado ou já foi usado' }
+    if (!couponPurchase) {
+      return { success: false, error: 'Cartão não encontrado' }
     }
 
-    // Verificar se o cupom está disponível
-    if (coupon.status !== 'AVAILABLE') {
-      return { success: false, error: 'Cartão não está disponível' }
+    // Verificar se o cupom já foi usado (uso único)
+    if (couponPurchase.used_at) {
+      return { success: false, error: 'Este cartão já foi utilizado e só pode ser usado uma vez' }
     }
 
-    // Verificar se o cupom expirou
-    const now = new Date()
-    if (coupon.expires_at && now > coupon.expires_at) {
+    const coupon = couponPurchase.discount_coupon
+
+    // Verificar se o cupom está ativo
+    if (!coupon.is_active) {
+      return { success: false, error: 'Cartão inativo' }
+    }
+
+    // Verificar se o cupom comprado expirou
+    if (couponPurchase.expires_at && new Date() > couponPurchase.expires_at) {
       return { success: false, error: 'Cartão expirado' }
     }
 
-    // Calcular desconto baseado no valor do cupom
-    const discount_amount = coupon.face_value_cents
-    const new_total = Math.max(0, order.total_cents - discount_amount)
+    // Verificar datas de validade do cupom
+    const now = new Date()
+    
+    if (coupon.valid_from && now < coupon.valid_from) {
+      return { success: false, error: 'Cartão ainda não está válido. Verifique a data de início.' }
+    }
+
+    if (coupon.valid_until && now > coupon.valid_until) {
+      return { success: false, error: 'Cartão expirado. Período de validade encerrado.' }
+    }
+
+    // Encontrar o produto selecionado no pedido
+    const selectedOrderItem = order.order_items.find((item: any) => item.product_id === selectedProductId)
+    if (!selectedOrderItem) {
+      return { success: false, error: 'Produto selecionado não encontrado no pedido' }
+    }
+
+    // Calcular desconto baseado na porcentagem
+    const productPrice = selectedOrderItem.price_cents * selectedOrderItem.quantity
+    const discountAmount = Math.floor(productPrice * (coupon.discount_percent / 100))
+    const newTotal = Math.max(0, order.total_cents - discountAmount)
 
     // Aplicar o cupom em uma transação
     await prismaWithRetry.$transaction(async (tx) => {
       // Marcar o cupom como usado
-      await tx.coupon.update({
-        where: { id: coupon.id },
+      await tx.discountCouponPurchase.update({
+        where: { id: couponPurchase.id },
         data: {
-          status: 'USED',
           used_at: new Date(),
-          used_in_order_id: orderId,
-          updated_at: new Date()
+          order_id: orderId
         }
       })
 
@@ -354,17 +387,17 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
       await tx.order.update({
         where: { id: orderId },
         data: {
-          total_cents: new_total,
-          discount_cents: discount_amount
+          total_cents: newTotal,
+          discount_cents: discountAmount
         }
       })
     })
 
     return {
       success: true,
-      discount_cents: discount_amount,
-      new_total,
-      savings: discount_amount
+      discount_cents: discountAmount,
+      new_total: newTotal,
+      savings: discountAmount
     }
 
   } catch (error) {
