@@ -210,6 +210,7 @@ export default function CheckoutPage() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           cep: cep.replace(/\D/g, ''),
           items: cartItems.map(item => ({
@@ -269,6 +270,7 @@ export default function CheckoutPage() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           code: discountCouponCode.trim(),
           total_cents: getSubtotal(),
@@ -350,6 +352,7 @@ export default function CheckoutPage() {
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify(orderData)
       })
 
