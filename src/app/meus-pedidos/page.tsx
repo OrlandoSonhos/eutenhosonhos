@@ -22,7 +22,7 @@ interface OrderItem {
   product: {
     id: string
     title: string
-    image_url: string
+    images: string // JSON string contendo array de imagens
   }
 }
 
@@ -36,7 +36,7 @@ interface Order {
   shipping_address?: string
   shipping_city?: string
   shipping_state?: string
-  items: OrderItem[]
+  order_items: OrderItem[]
 }
 
 interface TrackingEvent {
@@ -227,10 +227,17 @@ export default function MeusPedidos() {
                 <div className="px-6 py-4">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Itens do Pedido</h4>
                   <div className="space-y-3">
-                    {order.items.map((item) => (
+                    {order.order_items.map((item) => (
                       <div key={item.id} className="flex items-center space-x-4">
                         <img
-                          src={item.product.image_url || '/placeholder-product.svg'}
+                          src={(() => {
+                            try {
+                              const images = JSON.parse(item.product.images || '[]')
+                              return images[0] || '/placeholder-product.svg'
+                            } catch {
+                              return '/placeholder-product.svg'
+                            }
+                          })()} 
                           alt={item.product.title}
                           className="w-16 h-16 object-cover rounded-lg"
                         />

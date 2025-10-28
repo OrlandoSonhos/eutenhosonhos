@@ -23,16 +23,28 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || !(session as any).user) {
+    if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Usuário não autenticado' },
         { status: 401 }
       )
     }
 
+    // Buscar o usuário
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      )
+    }
+
     const body = await request.json()
     const { code, total_cents, selected_product_id, cart_items } = validateCouponSchema.parse(body)
-    const userId = (session as any).user.id
+    const userId = user.id
 
     console.log(`[COUPON_VALIDATION] Iniciando validação de cupom:`, {
       coupon_code: code,
