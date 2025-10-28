@@ -138,7 +138,7 @@ export function createOrderPreference(
   return createPreference({
     items: mpItems,
     payer: userEmail ? { email: userEmail } : undefined,
-    external_reference: orderId || `order-${Date.now()}`,
+    external_reference: orderId ? `order-${orderId}` : `order-${Date.now()}`,
     notification_url: `${process.env.APP_URL || 'http://localhost:3000'}/api/webhook/mp`,
     back_urls: {
       success: `${process.env.APP_URL || 'http://localhost:3000'}/pedidos/sucesso`,

@@ -196,12 +196,42 @@ async function processPaymentData(paymentData: any) {
     console.log('📦 PROCESSANDO COMO PEDIDO...')
     await processOrderPayment(paymentData)
   }
-  else {
+  else if (externalReference) {
+    // Tentar verificar se o external_reference é um ID de pedido válido
+    console.log('🔍 Verificando se external_reference é um ID de pedido...')
+    
+    try {
+      const order = await prismaWithRetry.order.findUnique({
+        where: { id: externalReference }
+      })
+      
+      if (order) {
+        console.log('✅ External_reference é um ID de pedido válido!')
+        console.log('📦 PROCESSANDO COMO PEDIDO...')
+        
+        // Criar um paymentData modificado com o external_reference correto
+        const modifiedPaymentData = {
+          ...paymentData,
+          external_reference: `order-${externalReference}`
+        }
+        
+        await processOrderPayment(modifiedPaymentData)
+        return
+      }
+    } catch (error) {
+      console.log('❌ Erro ao verificar se é pedido:', error)
+    }
+    
     console.log('❌ EXTERNAL_REFERENCE INVÁLIDO OU AUSENTE!')
     console.log('   Valor recebido:', externalReference)
     
     // Para merchant orders sem external_reference, tentar processar como cupom
     // baseado no valor pago
+    console.log('🔄 Tentando processar como cupom baseado no valor...')
+    await processCouponPayment(paymentData)
+  }
+  else {
+    console.log('❌ EXTERNAL_REFERENCE AUSENTE!')
     console.log('🔄 Tentando processar como cupom baseado no valor...')
     await processCouponPayment(paymentData)
   }
