@@ -152,21 +152,19 @@ export async function validateDiscountCoupon({
     }
 
     // Verificar restrições por categoria do produto selecionado
-    const couponRestrictions = await prisma.couponRestriction.findMany({
+    const couponRestrictions = await prisma.couponCategoryRestriction.findMany({
       where: {
-        coupon_id: coupon.id,
-        selected_product_category: productFromDb.category_id,
-        user_id: user_id
+        coupon_type: coupon.type,
+        category_id: productFromDb.category_id
       },
       include: { category: true }
     })
 
     console.log(`[COUPON_VALIDATION] Verificando restrições para cupom ${coupon.type}:`, {
-      coupon_id: coupon.id,
+      coupon_type: coupon.type,
       restrictions_count: couponRestrictions.length,
       selected_product_id: productFromDb.id,
-      selected_product_category: productFromDb.category_id,
-      user_id: user_id
+      selected_product_category: productFromDb.category_id
     })
 
     if (couponRestrictions.length > 0) {
@@ -193,8 +191,7 @@ export async function validateDiscountCoupon({
           if (selectedProductCategoryId === restriction.category_id) {
             console.log(`[COUPON_VALIDATION] RESTRIÇÃO ATENDIDA - ALLOWED:`, {
               allowed_category: restriction.category.name,
-              selected_product_category: selectedProductCategoryId,
-              user_id: user_id
+              selected_product_category: selectedProductCategoryId
             })
             // Categoria permitida - continuar validação
             break
@@ -202,8 +199,7 @@ export async function validateDiscountCoupon({
             // Produto não está na categoria permitida
             console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - ALLOWED:`, {
               allowed_category: restriction.category.name,
-              selected_product_category: selectedProductCategoryId,
-              user_id: user_id
+              selected_product_category: selectedProductCategoryId
             })
             
             return {
@@ -216,8 +212,7 @@ export async function validateDiscountCoupon({
           if (selectedProductCategoryId === restriction.category_id) {
             console.log(`[COUPON_VALIDATION] RESTRIÇÃO VIOLADA - FORBIDDEN:`, {
               forbidden_category: restriction.category.name,
-              selected_product_category: selectedProductCategoryId,
-              user_id: user_id
+              selected_product_category: selectedProductCategoryId
             })
             
             return {
