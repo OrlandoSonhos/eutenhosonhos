@@ -142,19 +142,19 @@ export async function POST(request: NextRequest) {
       discountCoupon = discountCouponValidation
     }
 
-    // Calcular o valor final (inicialmente igual ao total, será atualizado se houver cupom)
-    let finalCents = orderData.total
-    let discountCents = 0
+    // Calcular totais base (subtotal + frete) sem considerar desconto do frontend
+    const subtotalCents = orderData.items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0)
+    const shippingCents = orderData.selectedShipping?.price_cents || orderData.shipping
+    const baseTotalCents = subtotalCents + shippingCents
 
-    // Se há cupom de valor, aplicar o desconto
+    // Inicialmente, aplicar apenas cupons de valor (não porcentagem) no servidor
+    let discountCents = 0
+    let finalCents = baseTotalCents
+
     if (coupon) {
       // Para cupons de valor, o desconto é o valor facial do cupom
       discountCents = coupon.face_value_cents
-      finalCents = Math.max(0, orderData.total - discountCents)
-    } else if (orderData.discount > 0) {
-      // Se não há cupom regular mas há desconto calculado no frontend, usar esse desconto
-      discountCents = orderData.discount
-      finalCents = Math.max(0, orderData.total)
+      finalCents = Math.max(0, baseTotalCents - discountCents)
     }
 
     // Criar o pedido no banco de dados
@@ -162,10 +162,11 @@ export async function POST(request: NextRequest) {
       data: {
         user_id: userId,
         status: 'PENDING',
-        total_cents: orderData.total,
+        // total_cents sempre representa subtotal + frete, sem descontos
+        total_cents: baseTotalCents,
         discount_cents: discountCents,
         final_cents: finalCents,
-        shipping_cents: orderData.shipping,
+        shipping_cents: shippingCents,
         shipping_cep: orderData.shippingAddress?.cep,
         shipping_address: orderData.shippingAddress?.address,
         shipping_number: orderData.shippingAddress?.number,
@@ -227,8 +228,8 @@ export async function POST(request: NextRequest) {
     const itemsForMP = orderData.items.map(item => {
       // Calcular proporção do desconto total para este item
       const itemTotal = item.price_cents * item.quantity
-      const subtotalCents = orderData.items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0)
-      const itemDiscountProportion = subtotalCents > 0 ? itemTotal / subtotalCents : 0
+      const subtotalForDistribution = orderData.items.reduce((sum, i) => sum + (i.price_cents * i.quantity), 0)
+      const itemDiscountProportion = subtotalForDistribution > 0 ? itemTotal / subtotalForDistribution : 0
       const itemDiscount = Math.round(totalDiscountCents * itemDiscountProportion)
       const finalItemPrice = Math.max(1, item.price_cents - Math.round(itemDiscount / item.quantity)) // Mínimo de 1 centavo
 
@@ -250,8 +251,8 @@ export async function POST(request: NextRequest) {
     // Criar preferência no Mercado Pago com valores já com desconto aplicado
     console.log('🚀 Enviando para Mercado Pago:', {
       items: itemsForMP,
-      shippingCents: orderData.selectedShipping?.price_cents || orderData.shipping,
-      totalValue: itemsForMP.reduce((sum, item) => sum + (item.price_cents * item.quantity), 0) + (orderData.selectedShipping?.price_cents || orderData.shipping)
+      shippingCents: shippingCents,
+      totalValue: itemsForMP.reduce((sum, item) => sum + (item.price_cents * item.quantity), 0) + shippingCents
     });
     
     const preference = await createOrderPreference(
@@ -313,9 +314,17 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
       return { success: false, error: 'Pedido não encontrado ou não pode ser modificado' }
     }
 
-    // Verificar se já existe um desconto aplicado neste pedido
-    if (order.discount_cents > 0) {
-      return { success: false, error: 'Já existe um cartão aplicado neste pedido' }
+    // Verificar se já existe um cupom de desconto aplicado neste pedido
+    // (permitir cupons de valor + cupons de desconto, mas não múltiplos cupons de desconto)
+    const existingDiscountCoupon = await prismaWithRetry.discountCouponPurchase.findFirst({
+      where: {
+        order_id: orderId,
+        used_at: { not: null }
+      }
+    })
+    
+    if (existingDiscountCoupon) {
+      return { success: false, error: 'Já existe um cupom de desconto aplicado neste pedido' }
     }
 
     // Buscar cupom de desconto comprado pelo usuário
@@ -370,7 +379,12 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
     // Calcular desconto baseado na porcentagem
     const productPrice = selectedOrderItem.price_cents * selectedOrderItem.quantity
     const discountAmount = Math.floor(productPrice * (coupon.discount_percent / 100))
-    const newTotal = Math.max(0, order.total_cents - discountAmount)
+    
+    // O discount_cents pode já conter desconto de cupom de valor
+    // Vamos adicionar o desconto do cupom de desconto ao existente
+    const existingDiscount = order.discount_cents || 0
+    const newTotalDiscount = existingDiscount + discountAmount
+    const newFinal = Math.max(0, order.total_cents - newTotalDiscount)
 
     // Aplicar o cupom em uma transação
     await prismaWithRetry.$transaction(async (tx) => {
@@ -383,12 +397,12 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
         }
       })
 
-      // Atualizar o total do pedido
+      // Atualizar totais do pedido (mantendo total_cents como base e ajustando final_cents)
       await tx.order.update({
         where: { id: orderId },
         data: {
-          total_cents: newTotal,
-          discount_cents: discountAmount
+          discount_cents: newTotalDiscount,
+          final_cents: newFinal
         }
       })
     })
@@ -396,7 +410,7 @@ async function applyDiscountCouponInternal(code: string, orderId: string, userId
     return {
       success: true,
       discount_cents: discountAmount,
-      new_total: newTotal,
+      new_total: newFinal,
       savings: discountAmount
     }
 
