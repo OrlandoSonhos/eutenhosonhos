@@ -28,10 +28,14 @@ export async function POST(request: NextRequest) {
       console.warn('Usando validação fallback para CEP:', cep)
     }
 
-    // Calcular peso total e buscar produtos
+    // Calcular peso total e buscar produtos (usar peso/dimensões quando disponíveis)
     let totalWeight = 0
     let totalValue = 0
     let hasFreeShipping = false
+    let comprimentoMax = 0
+    let larguraMax = 0
+    let alturaTotalEmpilhada = 0
+    let foundExplicitDimensions = false
     
     for (const item of items) {
       const productId = item.productId || item.id
@@ -50,10 +54,23 @@ export async function POST(request: NextRequest) {
         hasFreeShipping = true
       }
 
-      // Peso estimado: 100g por produto (pode ser configurado no futuro)
-      const productWeight = 100 // gramas
-      totalWeight += productWeight * item.quantity
+      // Peso: usar campo do produto se existir, senão estimar 100g por unidade
+      const weightGrams = (product as any).weight_grams ?? 100
+      totalWeight += weightGrams * item.quantity
       totalValue += (product.price_cents / 100) * item.quantity
+
+      // Dimensões: usar campos do produto se existirem
+      const lengthCm = (product as any).length_cm
+      const widthCm = (product as any).width_cm
+      const heightCm = (product as any).height_cm
+      if (lengthCm && widthCm && heightCm) {
+        foundExplicitDimensions = true
+        // Comprimento/largura máximos no pacote
+        comprimentoMax = Math.max(comprimentoMax, lengthCm)
+        larguraMax = Math.max(larguraMax, widthCm)
+        // Altura empilhada (assumindo empilhamento vertical)
+        alturaTotalEmpilhada += heightCm * item.quantity
+      }
     }
 
     // Se algum produto tem frete grátis, retornar apenas frete grátis
@@ -73,12 +90,15 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Obter dimensões baseadas no peso total
-    const dimensions = getDefaultDimensions(totalWeight)
+    // Dimensões do pacote: usar explícitas quando disponíveis, senão calcular pelo peso total
+    const dimensions = foundExplicitDimensions
+      ? { comprimento: comprimentoMax, largura: larguraMax, altura: Math.max(alturaTotalEmpilhada, 5) }
+      : getDefaultDimensions(totalWeight)
 
     // Calcular frete
     const shippingOptions = await calculateShipping({
-      cepOrigem: '01310-100', // CEP da empresa
+      // Origem fixa na Bahia (configurável via env)
+      cepOrigem: process.env.SHIPPING_ORIGIN_CEP || '40010-000',
       cepDestino: cep,
       peso: totalWeight,
       comprimento: dimensions.comprimento,

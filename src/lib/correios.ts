@@ -30,8 +30,8 @@ interface TrackingInfo {
   erro?: string
 }
 
-// CEP de origem (seu endereço/empresa)
-const CEP_ORIGEM = '01310-100' // Exemplo: São Paulo - SP
+// CEP de origem (seu endereço/empresa) - configurável via env, default Bahia
+const CEP_ORIGEM = process.env.SHIPPING_ORIGIN_CEP || '40010-000' // Salvador - BA
 
 /**
  * Calcula o frete usando a API dos Correios
@@ -60,8 +60,8 @@ export async function calculateShipping(params: ShippingCalculationParams): Prom
     })
 
     if (!response.ok) {
-      // Fallback: cálculo estimado baseado na distância
-      return await calculateShippingFallback(params.cepDestino)
+      // Fallback: cálculo estimado considerando região, peso e dimensões
+      return await calculateShippingFallback(params)
     }
 
     const data = await response.json()
@@ -82,17 +82,17 @@ export async function calculateShipping(params: ShippingCalculationParams): Prom
     ]
   } catch (error) {
     console.error('Erro ao calcular frete:', error)
-    return await calculateShippingFallback(params.cepDestino)
+    return await calculateShippingFallback(params)
   }
 }
 
 /**
  * Cálculo de frete simplificado (fallback)
  */
-async function calculateShippingFallback(cepDestino: string): Promise<ShippingOption[]> {
+async function calculateShippingFallback(params: ShippingCalculationParams): Promise<ShippingOption[]> {
   try {
     // Buscar informações do CEP para determinar região
-    const cepInfo = await fetch(`https://viacep.com.br/ws/${cepDestino}/json/`)
+    const cepInfo = await fetch(`https://viacep.com.br/ws/${params.cepDestino}/json/`)
     const data = await cepInfo.json()
     
     if (data.erro) {
@@ -100,7 +100,8 @@ async function calculateShippingFallback(cepDestino: string): Promise<ShippingOp
     }
 
     // Cálculo baseado na região
-    const estado = data.uf
+    const estadoDestino = data.uf
+    const estadoOrigem = 'BA'
     let sedexPrice = 15.00
     let pacPrice = 10.00
     let sedexDays = 2
@@ -113,32 +114,67 @@ async function calculateShippingFallback(cepDestino: string): Promise<ShippingOp
     const regioesNorte = ['AM', 'RR', 'AP', 'PA', 'TO', 'RO', 'AC']
     const regioesCentroOeste = ['MT', 'MS', 'GO', 'DF']
 
-    if (regioesSudeste.includes(estado)) {
-      // Região Sudeste - mais próximo
-      sedexPrice = 12.00
-      pacPrice = 8.00
+    // Precificação base considerando origem Bahia
+    if (estadoDestino === estadoOrigem) {
+      // Local (BA -> BA)
+      sedexPrice = 15.00
+      pacPrice = 10.00
       sedexDays = 1
-      pacDays = 5
-    } else if (regioesSul.includes(estado)) {
+      pacDays = 4
+    } else if (regioesNordeste.includes(estadoDestino)) {
+      // Nordeste (BA -> NE)
+      sedexPrice = 22.00
+      pacPrice = 15.00
+      sedexDays = 3
+      pacDays = 8
+    } else if (regioesSudeste.includes(estadoDestino)) {
       sedexPrice = 18.00
       pacPrice = 12.00
       sedexDays = 3
       pacDays = 8
-    } else if (regioesNordeste.includes(estado)) {
-      sedexPrice = 25.00
-      pacPrice = 18.00
+    } else if (regioesSul.includes(estadoDestino)) {
+      sedexPrice = 24.00
+      pacPrice = 16.00
       sedexDays = 4
-      pacDays = 12
-    } else if (regioesNorte.includes(estado)) {
+      pacDays = 10
+    } else if (regioesNorte.includes(estadoDestino)) {
       sedexPrice = 35.00
       pacPrice = 25.00
       sedexDays = 6
       pacDays = 15
-    } else if (regioesCentroOeste.includes(estado)) {
-      sedexPrice = 22.00
-      pacPrice = 15.00
-      sedexDays = 3
+    } else if (regioesCentroOeste.includes(estadoDestino)) {
+      sedexPrice = 28.00
+      pacPrice = 20.00
+      sedexDays = 4
       pacDays = 10
+    }
+
+    // Ajustes por peso
+    const pesoKg = Math.max(0.1, (params.peso || 0) / 1000)
+    if (pesoKg <= 0.5) {
+      // base
+    } else if (pesoKg <= 1) {
+      sedexPrice += 5; pacPrice += 3
+    } else if (pesoKg <= 10) {
+      sedexPrice += 20; pacPrice += 12
+    } else if (pesoKg <= 20) {
+      sedexPrice += 40; pacPrice += 25
+    } else {
+      sedexPrice += 80; pacPrice += 50
+    }
+
+    // Ajustes por dimensões (oversize)
+    const somaDim = (params.comprimento || 0) + (params.altura || 0) + (params.largura || 0)
+    const maiorDim = Math.max(params.comprimento || 0, params.altura || 0, params.largura || 0)
+    if (somaDim > 200 || maiorDim > 100) {
+      sedexPrice += 60; pacPrice += 40
+    }
+
+    // Valor declarado
+    const valorDeclarado = params.valorDeclarado || 0
+    if (valorDeclarado > 0) {
+      sedexPrice += Math.min(100, valorDeclarado * 0.01) // 1% até R$100
+      pacPrice += Math.min(60, valorDeclarado * 0.006)   // 0.6% até R$60
     }
 
     return [
@@ -162,14 +198,16 @@ async function calculateShippingFallback(cepDestino: string): Promise<ShippingOp
       {
         codigo: '04014',
         nome: 'SEDEX',
-        prazo: 3,
-        valor: 20.00
+        prazo: 5,
+        valor: 25.00,
+        erro: 'Cálculo estimado'
       },
       {
         codigo: '04510',
         nome: 'PAC',
-        prazo: 10,
-        valor: 15.00
+        prazo: 12,
+        valor: 18.00,
+        erro: 'Cálculo estimado'
       }
     ]
   }

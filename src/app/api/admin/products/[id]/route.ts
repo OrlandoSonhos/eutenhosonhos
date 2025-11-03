@@ -15,7 +15,12 @@ const updateProductSchema = z.object({
   category_id: z.string().nullable().optional(),
   is_auction: z.boolean().optional(),
   auction_date: z.string().datetime().nullable().optional(),
-  auction_end_date: z.string().datetime().nullable().optional()
+  auction_end_date: z.string().datetime().nullable().optional(),
+  // Campos de frete (opcionais)
+  weight_grams: z.number().int().min(0).optional(),
+  length_cm: z.number().min(0).optional(),
+  width_cm: z.number().min(0).optional(),
+  height_cm: z.number().min(0).optional()
 })
 
 // GET - Buscar produto específico (admin)

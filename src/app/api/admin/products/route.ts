@@ -12,7 +12,12 @@ const createProductSchema = z.object({
   images: z.array(z.string()).min(1, 'Pelo menos uma imagem é obrigatória'),
   active: z.boolean().default(true),
   featured: z.boolean().default(false),
-  category_id: z.string().nullable().optional()
+  category_id: z.string().nullable().optional(),
+  // Campos de frete (opcionais)
+  weight_grams: z.number().int().min(0).optional(),
+  length_cm: z.number().min(0).optional(),
+  width_cm: z.number().min(0).optional(),
+  height_cm: z.number().min(0).optional()
 })
 
 // GET - Listar produtos (admin)
