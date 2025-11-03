@@ -27,6 +27,11 @@ interface ProductForm {
   active: boolean
   featured: boolean
   category_id?: string
+  // Campos de frete (opcionais)
+  weight_grams?: number
+  length_cm?: number
+  width_cm?: number
+  height_cm?: number
 }
 
 export default function NewProductPage() {
@@ -45,7 +50,11 @@ export default function NewProductPage() {
     images: [],
     active: true,
     featured: false,
-    category_id: undefined
+    category_id: undefined,
+    weight_grams: undefined,
+    length_cm: undefined,
+    width_cm: undefined,
+    height_cm: undefined
   })
 
   // Carregar categorias
@@ -316,6 +325,85 @@ export default function NewProductPage() {
               </label>
             </div>
           </div>
+        </div>
+
+        {/* Medidas e Peso para Frete */}
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Medidas e Peso (Frete)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Peso (g) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Peso (gramas)
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={form.weight_grams ?? ''}
+                onChange={(e) => setForm(prev => ({
+                  ...prev,
+                  weight_grams: e.target.value === '' ? undefined : parseInt(e.target.value)
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 250"
+              />
+            </div>
+            {/* Comprimento (cm) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Comprimento (cm)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={form.length_cm ?? ''}
+                onChange={(e) => setForm(prev => ({
+                  ...prev,
+                  length_cm: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 20"
+              />
+            </div>
+            {/* Largura (cm) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Largura (cm)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={form.width_cm ?? ''}
+                onChange={(e) => setForm(prev => ({
+                  ...prev,
+                  width_cm: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 15"
+              />
+            </div>
+            {/* Altura (cm) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Altura (cm)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step="0.1"
+                value={form.height_cm ?? ''}
+                onChange={(e) => setForm(prev => ({
+                  ...prev,
+                  height_cm: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ex: 10"
+              />
+            </div>
+          </div>
+          <p className="text-sm text-gray-500 mt-3">Se não preencher, usaremos peso/dimensões padrão para estimativa de frete.</p>
         </div>
 
         {/* Imagens */}
